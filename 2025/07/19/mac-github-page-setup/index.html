@@ -276,7 +276,7 @@
           <span class="text-gray-400">·</span>
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
-            <span>234 words</span>
+            <span>251 words</span>
           </span>
           
         </section>
@@ -299,18 +299,20 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/xbmlz/hexo-theme-maple themes/maple</span><br></pre></td></tr></table></figure>
 
 <p>修改根目录 <code>_config.yml</code></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">theme: next   # 启用主题[6,7](@ref)</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">theme:maple   # 启用主题[6,7](@ref)</span><br></pre></td></tr></table></figure>
 
 <p>修改 <code>themes/maple/_config.yml</code>的配置</p>
 <h2 id="github-pages"><a href="#github-pages" class="headerlink" title="github pages"></a>github pages</h2><p><strong>创建GitHub仓库</strong>,</p>
 <ul>
-<li>仓库名必须为 <code>用户名.github.io</code>（严格小写）</li>
+<li>仓库名必须为 <code>用户名.github.io</code>（严格小写，最好与github的用户名一样）</li>
 </ul>
 <p><strong>安装部署插件</strong></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure>
 
 <p><strong>配置部署信息</strong></p>
 <p>修改根目录 <code>_config.yml</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">url: https://用户名.github.io/</span><br></pre></td></tr></table></figure>
+
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:用户名/用户名.github.io.git   # SSH地址</span><br><span class="line">  branch: main</span><br></pre></td></tr></table></figure>
 
 <p><strong>一键部署</strong></p>
