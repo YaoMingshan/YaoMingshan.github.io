@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Evan">
+
+
+  <meta name="subtitle" content="Hi! I'm Evan, an SW engineer passionate about ​performance optimization​​ in AI training and inference.">
+
+
+
+
+<title>Desktop PC DIY For Newbie | 1% faster matters</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+
+    $("#toggle-dark").click((event) => {
+      const isAppearanceTransition = document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!isAppearanceTransition) {
+        toggleDark()
+        return
+      }
+      const x = event.clientX
+      const y = event.clientY
+      const endRadius = Math.hypot(
+        Math.max(x, innerWidth - x),
+        Math.max(y, innerHeight - y),
+      )
+      const transition = document.startViewTransition(async () => {
+        toggleDark()
+      })
+
+      transition.ready
+        .then(() => {
+          const isDark = document.documentElement.classList.contains("dark")
+          const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+          ]
+          document.documentElement.animate(
+            {
+              clipPath: isDark
+                ? [...clipPath].reverse()
+                : clipPath,
+            },
+            {
+              duration: 400,
+              easing: 'ease-out',
+              pseudoElement: isDark
+                ? '::view-transition-old(root)'
+                : '::view-transition-new(root)',
+            },
+          )
+        })
+    });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="1% faster matters" />
+          1% faster matters
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        Desktop PC DIY For Newbie
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/YaoMingshan">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        Desktop PC DIY For Newbie
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2025-07-30</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>15 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>4.3k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="小白DIY台式机思路指南-避坑重点"><a href="#小白DIY台式机思路指南-避坑重点" class="headerlink" title="小白DIY台式机思路指南 (避坑重点)"></a>小白DIY台式机思路指南 (避坑重点)</h1><p><strong>核心原则：需求决定配置，兼容性最关键！</strong></p>
+<h2 id="装机需求-起点！"><a href="#装机需求-起点！" class="headerlink" title="装机需求 (起点！)"></a>装机需求 (起点！)</h2><ul>
+<li><strong>明确核心用途：</strong> 游戏(什么类型&#x2F;分辨率&#x2F;帧率要求)？办公(轻度文档还是重度计算)？设计&#x2F;渲染(吃CPU还是GPU)？影音娱乐？多开虚拟机&#x2F;直播？</li>
+<li><strong>性能期望：</strong> 流畅运行当前目标？还是预留几年升级空间？</li>
+<li><strong>预算范围：</strong> 设定总预算上限，并初步在心里划分各部分的大致比例。</li>
+<li><strong>其他偏好：</strong> 需要静音？喜欢RGB灯光？追求小巧体积(ITX)？还是标准&#x2F;大机箱？对品牌有无倾向？</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>切忌好高骛远：</strong> 不要盲目追求顶级配置，满足需求的性能才是性价比。性能过剩也是浪费。</li>
+<li><strong>明确首要目标：</strong> 预算有限时，钱要花在刀刃上。游戏优先显卡，生产力(如渲染、视频剪辑)可能更看重CPU+大内存。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选CPU"><a href="#挑选CPU" class="headerlink" title="挑选CPU"></a>挑选CPU</h2><ul>
+<li><p><strong>核心考量：</strong></p>
+<ul>
+<li><strong>性能需求与预算匹配：</strong> 根据装机需求的性能级别选择合适的CPU档次。性能高低通常反映在价格上。</li>
+<li><strong>平台选择(Intel vs AMD)：</strong> 两大阵营各有优势，不同时期、不同价位段性价比会波动。重点看同时期的同价位产品评测对比。</li>
+<li><strong>核心&#x2F;线程数：</strong> 游戏通常4核8线程起步即可满足大部分需求，高画质&#x2F;高帧数或生产力可能需要6核12线程甚至更多。</li>
+<li><strong>频率：</strong> 主频和超频影响单核性能，对游戏比较重要。</li>
+<li><strong>代际：</strong> 新一代CPU通常在功耗比、IPC(每时钟周期指令数)上有进步，可能带来更好的性能或更低的功耗发热。</li>
+</ul>
+</li>
+<li><p><strong>避坑要点：</strong></p>
+<ul>
+<li><strong>忽略主板兼容性：</strong> CPU的接口类型（如Intel的LGA1700, AMD的AM5&#x2F;AM4）决定了你能选择的主板范围。必须确保CPU插槽和主板插槽一致！</li>
+<li><strong>搭配不合理：</strong> 避免“小马拉大车”(低端CPU配顶级显卡，游戏瓶颈在CPU)或“大牛拉小车”(顶级CPU配低端显卡，性能浪费)。</li>
+<li><strong>散热需求低估：</strong> 高端CPU功耗大，发热高，必须搭配相应的散热方案。</li>
+</ul>
+</li>
+<li><p>CPU型号规则</p>
+<table>
+<thead>
+<tr>
+<th>厂商</th>
+<th>示例</th>
+<th>分级</th>
+<th>代际</th>
+<th>后缀</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>intel</td>
+<td>Intel Core i7-13700K</td>
+<td><strong>i3&#x2F;i5&#x2F;i7&#x2F;i9</strong>：性能从低到高，数字越大定位越高（如i9为旗舰）<br /><strong>Ultra（新品牌）</strong>：如Ultra 7 155H，取代部分Core系列，强调能效比（移动端常见）</td>
+<td><strong>第1-2位数字</strong>：代际（如 13700为第13代Raptor Lake）；<br /><strong>2023年后</strong>：可能简化为单数字（如Ultra 7 <code>5</code>55U中的 <code>5</code>代表第5代）</td>
+<td>K:超频<br />F:无核显<br />T:低功耗<br />H&#x2F;HX:移动端高性能版<br />U&#x2F;P:移动低功耗</td>
+</tr>
+<tr>
+<td>amd</td>
+<td>AMD Ryzen 7 7800X3D</td>
+<td><strong>Ryzen（消费级）<strong>3&#x2F;5&#x2F;7&#x2F;9</strong>：性能等级（类似Intel的i3-i9）</strong></td>
+<td><strong>第1位数字</strong>：代际（如 <code>7</code>800为Zen 4架构）<br /><strong>2023年后</strong>：第4位数字代表架构迭代（如 <code>7945HX</code>中 <code>4</code>&#x3D;Zen 4）</td>
+<td>X:超频<br />XT:比X增强版本<br />X3D:3D V-Cache缓存,游戏神器<br />HX:移动高性能<br />HS:低功耗高性能<br />U:超低功耗<br />F:无核显<br />G:带核显<br />*（5000系及之前系列，除了后缀有G的其他均为无核显，7000除了后缀F，都有核显）</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h2 id="挑选显卡"><a href="#挑选显卡" class="headerlink" title="挑选显卡"></a>挑选显卡</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>性能需求：</strong> 显卡是游戏性能的决定因素。目标分辨率(1080P, 2K, 4K)、画面特效(低&#x2F;中&#x2F;高&#x2F;极致)、期望帧率(60fps, 144fps)决定了所需显卡性能等级。</li>
+<li><strong>显存容量与位宽：</strong> 高分辨率、高特效、大型游戏需要更大的显存(至少6GB，4K建议12GB以上)和更高的位宽（影响数据吞吐速度）。</li>
+<li><strong>功耗：</strong> 高性能显卡功耗很高，对电源功率和质量提出要求。注意查看显卡的TDP(热设计功耗)。</li>
+<li><strong>接口：</strong> 确保显卡接口(目前主要是PCIe x16)和主板对应插槽兼容，并且机箱能装下（长度、厚度）。</li>
+<li><strong>品牌与型号差异：</strong> 不同品牌&#x2F;不同散热设计的非公版显卡在性能(超频)、散热、噪音上可能有差异。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>分辨率&#x2F;帧率要求模糊：</strong> 不知道自己想要什么画质和帧数，容易买到性能不足或严重浪费的显卡。</li>
+<li><strong>显存不足：</strong> 忽略显存重要性，在高分辨率&#x2F;高特效下容易爆显存导致卡顿。</li>
+<li><strong>电源功率不足或虚标：</strong> 显卡是耗电大户，劣质或功率不足的电源是系统不稳定的巨大隐患，甚至可能烧毁硬件。</li>
+<li><strong>机箱空间限制：</strong> 高端显卡往往很长甚至很厚(三槽位)，务必确认机箱内部空间、特别是显卡限长是否足够。</li>
+<li><strong>CPU瓶颈：</strong> 同“挑选CPU”中的“搭配不合理”。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选主板"><a href="#挑选主板" class="headerlink" title="挑选主板"></a>挑选主板</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>CPU兼容性：</strong> <strong>最重要！</strong> 主板芯片组必须支持你选择的CPU（匹配接口型号如LGA1700&#x2F;AM5）。同一接口早期芯片组可能需要BIOS更新才能支持新CPU。</li>
+<li><strong>尺寸规格 (Form Factor)：</strong> ATX (标准大板), Micro-ATX (紧凑型小板), Mini-ITX (迷你板)。决定你能选用多大的机箱。ATX板子不能放进小机箱。</li>
+<li><strong>扩展性与接口：</strong><ul>
+<li>需要几个内存插槽？(通常2或4根，双通道必备)</li>
+<li>需要几个M.2 SSD插槽？什么协议？(NVMe PCIe 3.0 vs 4.0 vs 5.0) - 影响高速SSD的速度发挥。</li>
+<li>需要几个SATA接口？(接机械硬盘或SATA SSD)</li>
+<li>需要多少个USB接口(尤其高速USB-A和Type-C)？主板I&#x2F;O接口和前置机箱接口都要看。</li>
+<li>PCIe插槽数量及速度？(除了显卡，可能用于扩展卡如声卡、网卡、采集卡)</li>
+</ul>
+</li>
+<li><strong>供电能力：</strong> 高端CPU对主板供电模组要求高（相数、散热），供电不足会影响CPU性能发挥甚至不稳定。主流CPU对主流主板的供电压力不大。</li>
+<li><strong>网络与音频：</strong> 集成网卡(有线千兆&#x2F;2.5G&#x2F;万兆？无线WiFi几代？蓝牙？)，集成声卡满足基本需求即可，发烧友可能另购声卡。</li>
+<li><strong>品牌与做工：</strong> 一线品牌通常在BIOS优化、用料、售后方面更有保障。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>CPU与主板物理&#x2F;电气不兼容：</strong> 这是最致命的错误！务必核对接口是否匹配。</li>
+<li><strong>主板尺寸与机箱不匹配：</strong> ATX主板装不进M-ATX或ITX机箱。</li>
+<li><strong>扩展性不足：</strong> 低估了后期添加M.2硬盘、SATA设备等的需求。</li>
+<li><strong>供电不足：</strong> 尤其是搭配高端CPU时选用了供电孱弱的主板，会限制性能甚至导致蓝屏死机。</li>
+<li><strong>接口不够用：</strong> 特别是USB接口和M.2插槽。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选内存条"><a href="#挑选内存条" class="headerlink" title="挑选内存条"></a>挑选内存条</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>容量：</strong> <strong>满足基本需求是首要任务。</strong> 目前主流游戏和办公建议16GB(2x8GB双通道)起步。生产力、大型游戏、复杂多任务建议32GB(2x16GB)。</li>
+<li><strong>类型与代数：</strong> <strong>必须与主板支持的内存类型一致！</strong> 当前主流是DDR4和DDR5。主板仅支持其中一种（少数高端主板同时有DDR4和DDR5插槽，但一般不建议）。</li>
+<li><strong>频率(速度)：</strong> 在满足CPU和主板支持的前提下选择。更高频率对性能有提升(尤其对AMD平台和集成显卡)，但需权衡性价比。注意：内存实际工作频率受CPU内存控制器和主板限制，不是买多高就能跑到多高。</li>
+<li><strong>时序(CL值)：</strong> 同频率下，时序越低越好（延迟更低），但影响通常不如频率明显，且价格更高。关注主要时序如CL16, CL18等。</li>
+<li><strong>通道：</strong> 务必组建双通道！(通常是插2根或4根内存条)。单通道性能损失明显。买2根套条(组成双通道)通常比买1根好。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>容量不足：</strong> 8GB对现代应用越来越吃力，是常见卡顿原因之一。</li>
+<li><strong>代数不兼容：</strong> 买了DDR5内存插在只支持DDR4的主板上，<strong>完全插不进去，物理不兼容！</strong></li>
+<li><strong>忽视主板&#x2F;CPU支持上限：</strong> 买了超高频内存，但主板或CPU限制只能运行在较低频率。</li>
+<li><strong>单通道运行：</strong> 性能白白损失。务必插在主板说明书指定的对应插槽上（通常是A2和B2槽）。</li>
+<li><strong>超频不稳定：</strong> 新手不建议过度追求极限内存超频，开启XMP(Intel)&#x2F;EXPO(AMD)即可方便地达到标称频率。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选电源"><a href="#挑选电源" class="headerlink" title="挑选电源"></a>挑选电源</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>功率：</strong> <strong>宁余勿缺！</strong> 估算整机功耗(主要看CPU和显卡的TDP，留出余地)，电源额定功率应至少预留30%-50%以上的富裕（考虑到转换效率老化、瞬时峰值功耗等）。使用在线电源功率计算器辅助估算，但结果仅供参考。</li>
+<li><strong>转换效率与认证：</strong> 80 PLUS认证是基础（白牌、铜牌、银牌、金牌、铂金、钛金），认证等级越高，转换效率越高（省电+发热低）。同等条件下优先选更高级别的认证。 <strong>但认证高 ≠ 质量好&#x2F;稳定！</strong> 它只代表省电程度。</li>
+<li><strong>品牌与做工：</strong> <strong>电源绝对不能贪便宜买杂牌！</strong> 这是整个电脑的“心脏”，劣质电源是硬件杀手。选择口碑好的一线品牌（尤其注意其不同系列定位），优先选择采用成熟方案（如LLC谐振+DC-DC）的产品。关注评测中的电压稳定性、纹波控制等。</li>
+<li><strong>接口与模组：</strong><ul>
+<li>务必确认电源有足够的、功率足够的CPU供电接口(4+4 pin 或 8 pin)和显卡供电接口(6pin, 6+2pin &#x2F; 8pin, 可能需要多个)。显卡供电线<strong>绝不能</strong>用转接头强行转接！</li>
+<li>模组类型：全模组(所有线可拆卸，理线方便美观)，半模组(部分线不可拆)，非模组(所有线固定)。全模组最贵也最利于定制化和整洁。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>功率不足&#x2F;虚标：</strong> 这是最大最危险的坑！功率不足导致死机、重启、显卡黑屏，长期使用损伤硬件，劣质电源甚至有爆炸起火的严重风险。<strong>务必选择靠谱品牌和充足的额定功率。</strong></li>
+<li><strong>品牌迷信忽略具体型号：</strong> 大品牌也有低端缩水产品线，同样预算下选择口碑好的型号更重要。</li>
+<li><strong>忽略接口：</strong> 没有足够的显卡8pin或CPU 8pin供电插头。</li>
+<li><strong>仅以80 PLUS认证论好坏：</strong> 认证只关乎省电，不代表内部设计用料和稳定性。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选散热"><a href="#挑选散热" class="headerlink" title="挑选散热"></a>挑选散热</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>CPU散热能力：</strong> 根据CPU的TDP功耗选择合适的散热器。低功耗CPU可用原装散热器或百元内风冷；中高端CPU(尤其AMD Ryzen 非X&#x2F;带X，Intel K系列)需要性能更强的风冷或240mm及以上水冷。</li>
+<li><strong>类型选择：</strong><ul>
+<li><strong>风冷：</strong> 结构简单、可靠、成本低、免维护。塔式风冷是主流选择，注意考虑散热器高度是否与机箱兼容。</li>
+<li><strong>水冷：</strong> 主要是AIO一体式水冷(分120&#x2F;240&#x2F;280&#x2F;360mm等冷排尺寸)。散热上限高、冷头小巧不挡内存灯光。缺点是有（极低概率）漏液风险（选大品牌有漏液包赔），水泵可能有噪音，价格相对高，通常寿命短于风冷（5年左右建议更换）。</li>
+</ul>
+</li>
+<li><strong>机箱风道：</strong> 机箱内需要合理规划进风和出风风扇（通常前&#x2F;下进冷风，后&#x2F;上出热风），形成流畅风道辅助散热。风扇数量不必过多，关键在合理布置。</li>
+<li><strong>噪音控制：</strong> 对静音有要求，需选择低转速风扇（支持PWM智能调速）或静音型散热器&#x2F;风扇。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>散热不足：</strong> CPU&#x2F;GPU长期高温运行，导致降频卡顿(影响性能)或硬件寿命缩短。</li>
+<li><strong>尺寸冲突：</strong><ul>
+<li>风冷散热器高度超过机箱限高。</li>
+<li>水冷冷排尺寸过大，机箱无法安装(尤其顶部安装时注意主板供电散热片高度、内存高度；前置安装时注意冷排厚度+风扇厚度+显卡长度)。</li>
+<li>内存条过高（带马甲&#x2F;RGB）被大型风冷散热器遮挡而无法安装。</li>
+</ul>
+</li>
+<li><strong>劣质水冷：</strong> 小品牌或低价水冷品质堪忧，漏水风险、噪音、易损坏、寿命短，<strong>强烈不建议</strong>购买。</li>
+<li><strong>忽略风道：</strong> 风扇胡乱安装（如全部向内吹或全部向外抽），形成不了有效散热风道。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选硬盘"><a href="#挑选硬盘" class="headerlink" title="挑选硬盘"></a>挑选硬盘</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>系统与软件盘：强烈推荐NVMe SSD！</strong> 作为主硬盘安装系统和常用软件&#x2F;游戏，提供极快的启动、加载和响应速度。容量至少500GB-1TB。</li>
+<li><strong>存储盘选择：</strong><ul>
+<li><strong>大容量SSD (SATA或NVMe)：</strong> 预算充足首选，速度快、静音、抗震。价格比机械硬盘高。</li>
+<li><strong>大容量机械硬盘(HDD)：</strong> 性价比较高，适合存储海量视频、照片、音乐、不常玩的游戏等对速度要求不高的数据。主流容量在2TB以上。</li>
+</ul>
+</li>
+<li><strong>接口匹配：</strong> NVMe SSD需要主板的M.2接口支持(NVMe协议)，SATA SSD和机械硬盘需要SATA接口和数据线。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>主硬盘使用机械硬盘：</strong> 严重拖慢整体系统响应速度，体验极差。<strong>2024年的新装电脑，系统盘必须用SSD！</strong></li>
+<li><strong>容量预估不足：</strong> 系统和软件越来越大，128GB SSD很快捉襟见肘，256GB也很勉强，500GB是最低舒适起点。</li>
+<li><strong>接口不匹配：</strong> 买了NVMe SSD但主板只有SATA协议的M.2插槽（或者反之）；买了SATA SSD但没有多余的SATA接口线缆&#x2F;电源线。</li>
+<li><strong>机械硬盘可靠性：</strong> 移动或震动中容易损坏，重要数据务必多备份（如云端、NAS或其他硬盘）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="挑选机箱"><a href="#挑选机箱" class="headerlink" title="挑选机箱"></a>挑选机箱</h2><ul>
+<li><strong>核心考量：</strong><ul>
+<li><strong>主板兼容性：</strong> 机箱必须支持你选择的主板尺寸规格 (ATX, M-ATX, ITX)。</li>
+<li><strong>散热器兼容性：</strong> 尤其是散热器高度限制（对风冷）和水冷冷排支持（支持多大尺寸的冷排？顶部&#x2F;前置能否安装？位置是否与主板冲突？）。</li>
+<li><strong>显卡限长：</strong> 机箱能容纳的最大显卡长度，必须大于你选择的显卡长度！通常厂商会标明显卡限长。</li>
+<li><strong>风道设计与风扇位：</strong> 是否有合理的进风(前&#x2F;下)和出风口(后&#x2F;上)？支持的风扇尺寸(120mm&#x2F;140mm)和数量？预装风扇数量？机箱结构能否形成有效风道（前面板是否是散热良好的金属网孔而不是密封的玻璃&#x2F;塑料板）？</li>
+<li><strong>存储扩展性：</strong> 支持多少个2.5英寸SSD和3.5英寸HDD？位置是否合理？</li>
+<li><strong>理线空间：</strong> 背部是否有足够的空间(背板厚度&#x2F;宽度)来走线？影响美观和散热。</li>
+<li><strong>I&#x2F;O接口位置：</strong> 前置USB接口(尤其是Type-C)的数量和位置？音频接口？开机&#x2F;重启键位置？</li>
+<li><strong>板材厚度与做工：</strong> 影响机箱稳固性和质感。</li>
+<li><strong>外观与扩展：</strong> 侧透？RGB灯效支持？个人喜好选择。</li>
+</ul>
+</li>
+<li><strong>避坑要点：</strong><ul>
+<li><strong>主板&#x2F;散热器&#x2F;显卡与机箱尺寸冲突：</strong> 这是最常见问题之一！务必确认三者尺寸兼容：<ul>
+<li>主板大小 &lt;&#x3D; 机箱支持规格。</li>
+<li>散热器高度 &lt;&#x3D; 机箱散热器限高。</li>
+<li>显卡长度 &lt;&#x3D; 机箱显卡限长 (还要考虑如果前置装了冷排是否会占用限长空间)。</li>
+<li>顶部安装水冷排时，注意冷排厚度 + 风扇厚度 是否与主板VRM散热片、内存高度冲突。前置安装冷排注意是否影响显卡长度空间。</li>
+</ul>
+</li>
+<li><strong>闷罐机箱：</strong> 为了美观选择前面板密封不透风的机箱(如全玻璃前面板)，散热性能极差(尤其对高功耗显卡)，硬件温度会很高。<strong>优先考虑散热良好的网孔面板机箱</strong>，如果喜欢玻璃面板，侧面和顶部应尽可能设计散热开口。</li>
+<li><strong>风扇位不足：</strong> 完全无风扇或只有1个风扇，散热堪忧，需自行购买额外风扇（成本增加）。</li>
+<li><strong>内部空间局促：</strong> 安装困难，走线麻烦，风道不畅。</li>
+</ul>
+</li>
+</ul>
+<p><strong>最后的提醒：</strong></p>
+<ul>
+<li><strong>兼容性检查：</strong> 选择好所有配件后，务必再次仔细核对兼容性清单：<ul>
+<li>CPU插槽与主板匹配</li>
+<li>内存代数与主板一致</li>
+<li>显卡尺寸 &lt;&#x3D; 机箱限长(考虑水冷影响)</li>
+<li>散热器高度 &lt;&#x3D; 机箱限高</li>
+<li>电源功率充足+接口足够</li>
+<li>所有硬盘接口主板均提供(包括M.2 NVMe&#x2F;SATA）</li>
+</ul>
+</li>
+</ul>
+<h2 id="REF"><a href="#REF" class="headerlink" title="REF"></a>REF</h2><p><a target="_blank" rel="noopener" href="https://pcspecchart.com/">pcspecchart</a>：一个可以查看CPU&#x2F;GPU性能和性价比的网站</p>
+<h2 id="Option"><a href="#Option" class="headerlink" title="Option"></a>Option</h2><table>
+<thead>
+<tr>
+<th>硬件</th>
+<th>备选</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CPU</td>
+<td>U7 265K</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+    </div>
+    <div>
+      
+        <a href="/2025/07/30/Technical-Indicators-For-Market/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          Technical Indicators For Market
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+<script
+  src="https://giscus.app/client.js"
+  data-repo=""
+  data-repo-id=""
+  data-category=""
+  data-category-id=""
+  data-mapping=""
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  crossorigin="anonymous"
+  async
+></script>
+<script>
+  window.onload = function () {
+    console.log("giscus loaded");
+    const isDark = document.documentElement.classList.contains("dark");
+    const giscusFrame = document.querySelector("iframe.giscus-frame");
+    giscusFrame.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: isDark ? "dark" : "light",
+          },
+        },
+      },
+      "https://giscus.app"
+    );
+  };
+</script>
+
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>
