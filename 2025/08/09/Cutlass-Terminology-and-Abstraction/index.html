@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Evan">
+
+
+  <meta name="subtitle" content="Hi! I'm Evan, an SW engineer passionate about ​performance optimization​​ in AI training and inference.">
+
+
+
+
+<title>Cutlass Terminology and Abstraction | 1% faster matters</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+
+    $("#toggle-dark").click((event) => {
+      const isAppearanceTransition = document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!isAppearanceTransition) {
+        toggleDark()
+        return
+      }
+      const x = event.clientX
+      const y = event.clientY
+      const endRadius = Math.hypot(
+        Math.max(x, innerWidth - x),
+        Math.max(y, innerHeight - y),
+      )
+      const transition = document.startViewTransition(async () => {
+        toggleDark()
+      })
+
+      transition.ready
+        .then(() => {
+          const isDark = document.documentElement.classList.contains("dark")
+          const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+          ]
+          document.documentElement.animate(
+            {
+              clipPath: isDark
+                ? [...clipPath].reverse()
+                : clipPath,
+            },
+            {
+              duration: 400,
+              easing: 'ease-out',
+              pseudoElement: isDark
+                ? '::view-transition-old(root)'
+                : '::view-transition-new(root)',
+            },
+          )
+        })
+    });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="1% faster matters" />
+          1% faster matters
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        Cutlass Terminology and Abstraction
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/YaoMingshan">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        Cutlass Terminology and Abstraction
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2025-08-10</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>5 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>990 words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="Terminology"><a href="#Terminology" class="headerlink" title="Terminology"></a>Terminology</h1><ul>
+<li>N - Column Major Matrix</li>
+<li>T - Row Major matrix</li>
+<li>{N,T} x {N,T} - All combinations, i.e., NN, NT, TN, TT</li>
+<li>lda: leading dimension of A</li>
+<li>ldb: leading dimension of B</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>T</th>
+<th>N</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>[M, K]<br />lda:K</td>
+<td>[K, M]<br />lda:M</td>
+</tr>
+<tr>
+<td>B</td>
+<td>[K, N]<br />ldb:N</td>
+<td>[N, K]<br />ldb:K</td>
+</tr>
+<tr>
+<td>C</td>
+<td>[M,N]<br />ldc:N</td>
+<td>[N,M]<br />ldc:M</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>以下内容是Cutlass中的术语和抽象，不包含Cute</p>
+</blockquote>
+<h2 id="Layout"><a href="#Layout" class="headerlink" title="Layout"></a>Layout</h2><p>functor mapping logical coordinates of a tensor to linear offset (as LongIndex); owns stride vectors.它只包含stride信息，主要是将坐标信息转换成一维的offset，和cute是不一样的，cute包含shape+stride信息。</p>
+<ul>
+<li>Gemm特化的layout： RowMajor and ColumnMajor</li>
+</ul>
+<p>以RowMajor为例</p>
+<ul>
+<li>它是2维的（Rank）</li>
+<li>stride为1维</li>
+<li>Index为多维坐标维度类型</li>
+<li>LongIndex是将多维转换为线性偏移时的类型</li>
+<li>TensorCoord用了MatrixCoord，它是一个两维的坐标</li>
+<li>stirde用了一个1维的Coord去表达</li>
+<li>Coord就是存储了N维的坐标</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">RowMajor</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">  <span class="comment">/// Logical rank of tensor</span></span><br><span class="line">  <span class="type">static</span> <span class="type">int</span> <span class="type">const</span> kRank = <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Rank of stride vector</span></span><br><span class="line">  <span class="type">static</span> <span class="type">int</span> <span class="type">const</span> kStrideRank = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Index type used for coordinates</span></span><br><span class="line">  <span class="keyword">using</span> Index = <span class="type">int32_t</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Long index type used for offsets</span></span><br><span class="line">  <span class="keyword">using</span> LongIndex = <span class="type">int64_t</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Logical coordinate</span></span><br><span class="line">  <span class="keyword">using</span> TensorCoord = MatrixCoord;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Stride vector</span></span><br><span class="line">  <span class="keyword">using</span> Stride = Coord&lt;kStrideRank, LongIndex&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// Data members</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">/// Stride data member</span></span><br><span class="line">  Stride stride_;</span><br><span class="line"></span><br><span class="line">  <span class="comment">////////////////////</span></span><br><span class="line">  <span class="comment">// other methods</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Element"><a href="#Element" class="headerlink" title="Element"></a>Element</h2><p>表达数据类型，比如ElementA: float</p>
+<h2 id="Extent"><a href="#Extent" class="headerlink" title="Extent"></a><strong>Extent</strong></h2><p>每个维度的大小</p>
+<h2 id="Fragment"><a href="#Fragment" class="headerlink" title="Fragment"></a><strong>Fragment</strong></h2><p>一片寄存器tile</p>
+<h2 id="Basic-gemm"><a href="#Basic-gemm" class="headerlink" title="Basic gemm"></a>Basic gemm</h2><p>代码cutlass&#x2F;examples&#x2F;00_basic_gemm&#x2F;basic_gemm.cu</p>
+<ul>
+<li>构造Gemm gemm_operator，传入的参数是编译期的模版参数<ul>
+<li>A、B、C、Acc的数据类型</li>
+<li>A、B、C Layout</li>
+<li>ArchTag架构信息</li>
+<li>block shape<ul>
+<li>架构和数据类型确定时，都用了固定的切分，常见&lt;128, 128, K&gt; &lt;128, 256, K&gt;</li>
+</ul>
+</li>
+<li>warp shape<ul>
+<li>架构和数据类型确定时，都用了固定的切分，常见&lt;32, 64, K&gt; &lt;64, 64, K&gt;</li>
+</ul>
+</li>
+<li>instruction shape</li>
+<li>epilogue op</li>
+<li>pipeline stage数量</li>
+<li>memory对齐信息</li>
+<li>根据以上信息选择GemmKernel，cutlass&#x2F;include&#x2F;cutlass&#x2F;gemm&#x2F;kernel&#x2F;default_gemm.h<ul>
+<li>Gemm, cutlass&#x2F;include&#x2F;cutlass&#x2F;gemm&#x2F;kernel&#x2F;gemm.h<ul>
+<li>ThreadblockMma，和架构相关<ul>
+<li>mmapipelined<ul>
+<li>mma core<ul>
+<li>计算warp数量，block thread数量</li>
+</ul>
+</li>
+<li>IteratorA: global to shared数据搬运</li>
+<li>IteratorB</li>
+<li>SmemIteratorA：shared to 寄存器数据搬运</li>
+<li>SmemIteratorB</li>
+<li>operator()中执行2d的load和计算<ul>
+<li>prologue: 从global load数据到shared</li>
+<li>gmem_wait</li>
+<li>gemm_iter<ul>
+<li>循环从global load数据到shared</li>
+<li>循环从shared load数据到寄存器</li>
+<li>warp_mma</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>epilogue</li>
+<li>threadblockswizzle</li>
+<li>在gemm的operator()是功能实现入口、包含了计算block起始位置、数据搬运、计算、后处理</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>构造Arguments arg，它类型在Gemm中定义了，参数都是运行期kernel参数<ul>
+<li>MNK</li>
+<li>addr + stride</li>
+<li>alpha&#x2F;beta epilogue参数</li>
+</ul>
+</li>
+<li>launch kernerl，gemm_operator(arg)<ul>
+<li>调用initialize准备kernel参数</li>
+<li>调用run launch kernel</li>
+<li>根据block shape和problem size自动计算block thread数量和block数量</li>
+<li>隐式做了ThreadblockSwizzle，block swizzle是为了更好的llc利用率</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">cudaError_t <span class="title">CutlassSgemmNN</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> M,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> N,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> K,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">float</span> alpha,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">float</span> <span class="type">const</span> *A,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> lda,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">float</span> <span class="type">const</span> *B,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> ldb,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">float</span> beta,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">float</span> *C,</span></span></span><br><span class="line"><span class="params"><span class="function">  <span class="type">int</span> ldc)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Define type definition for single-precision CUTLASS GEMM with column-major</span></span><br><span class="line">  <span class="comment">// input matrices and 128x128x8 threadblock tile size (chosen by default).</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// To keep the interface manageable, several helpers are defined for plausible compositions</span></span><br><span class="line">  <span class="comment">// including the following example for single-precision GEMM. Typical values are used as</span></span><br><span class="line">  <span class="comment">// default template arguments. See `cutlass/gemm/device/default_gemm_configuration.h` for more details.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// To view the full gemm device API interface, see `cutlass/gemm/device/gemm.h`</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">using</span> ColumnMajor = cutlass::layout::ColumnMajor;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">using</span> CutlassGemm = cutlass::gemm::device::Gemm&lt;<span class="type">float</span>,        <span class="comment">// Data-type of A matrix</span></span><br><span class="line">                                                  ColumnMajor,  <span class="comment">// Layout of A matrix</span></span><br><span class="line">                                                  <span class="type">float</span>,        <span class="comment">// Data-type of B matrix</span></span><br><span class="line">                                                  ColumnMajor,  <span class="comment">// Layout of B matrix</span></span><br><span class="line">                                                  <span class="type">float</span>,        <span class="comment">// Data-type of C matrix</span></span><br><span class="line">                                                  ColumnMajor&gt;; <span class="comment">// Layout of C matrix</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Define a CUTLASS GEMM type</span></span><br><span class="line">  CutlassGemm gemm_operator;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Construct the CUTLASS GEMM arguments object.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// One of CUTLASS&#x27;s design patterns is to define gemm argument objects that are constructible</span></span><br><span class="line">  <span class="comment">// in host code and passed to kernels by value. These may include pointers, strides, scalars,</span></span><br><span class="line">  <span class="comment">// and other arguments needed by Gemm and its components.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// The benefits of this pattern are (1.) a structured, composable strategy for passing host-constructible</span></span><br><span class="line">  <span class="comment">// arguments to kernels and (2.) minimized initialization overhead on kernel entry.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="function">CutlassGemm::Arguments <span class="title">args</span><span class="params">(&#123;M , N, K&#125;,  <span class="comment">// Gemm Problem dimensions</span></span></span></span><br><span class="line"><span class="params"><span class="function">                              &#123;A, lda&#125;,    <span class="comment">// Tensor-ref for source matrix A</span></span></span></span><br><span class="line"><span class="params"><span class="function">                              &#123;B, ldb&#125;,    <span class="comment">// Tensor-ref for source matrix B</span></span></span></span><br><span class="line"><span class="params"><span class="function">                              &#123;C, ldc&#125;,    <span class="comment">// Tensor-ref for source matrix C</span></span></span></span><br><span class="line"><span class="params"><span class="function">                              &#123;C, ldc&#125;,    <span class="comment">// Tensor-ref for destination matrix D (may be different memory than source C matrix)</span></span></span></span><br><span class="line"><span class="params"><span class="function">                              &#123;alpha, beta&#125;)</span></span>; <span class="comment">// Scalars used in the Epilogue</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// Launch the CUTLASS GEMM kernel.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  </span><br><span class="line">  cutlass::Status status = <span class="built_in">gemm_operator</span>(args);</span><br><span class="line"></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line">  <span class="comment">// Return a cudaError_t if the CUTLASS GEMM operator returned an error code.</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (status != cutlass::Status::kSuccess) &#123;</span><br><span class="line">    <span class="keyword">return</span> cudaErrorUnknown;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Return success, if no errors were encountered.</span></span><br><span class="line">  <span class="keyword">return</span> cudaSuccess;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>后面可以探究一下mmapipelined，其中的ineration和mma部分</p>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+    </div>
+    <div>
+      
+        <a href="/2025/07/30/Desktop-PC-DIY-For-Newbie/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          Desktop PC DIY For Newbie
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+<script
+  src="https://giscus.app/client.js"
+  data-repo=""
+  data-repo-id=""
+  data-category=""
+  data-category-id=""
+  data-mapping=""
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  crossorigin="anonymous"
+  async
+></script>
+<script>
+  window.onload = function () {
+    console.log("giscus loaded");
+    const isDark = document.documentElement.classList.contains("dark");
+    const giscusFrame = document.querySelector("iframe.giscus-frame");
+    giscusFrame.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: isDark ? "dark" : "light",
+          },
+        },
+      },
+      "https://giscus.app"
+    );
+  };
+</script>
+
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>
