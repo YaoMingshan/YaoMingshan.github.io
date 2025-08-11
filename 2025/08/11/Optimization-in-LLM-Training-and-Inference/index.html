@@ -17,7 +17,7 @@
 
 
 
-<title>1% faster matters</title>
+<title>Optimization in LLM Training and Inference | 1% faster matters</title>
 
 
 
@@ -194,7 +194,7 @@
         </h2>
       </a>
       <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
-        
+        Optimization in LLM Training and Inference
       </div>
       <div class="flex-1"></div>
       <div class="flex items-center gap-3">
@@ -240,164 +240,287 @@
 </div>
 
   <main class="pt-14">
-    <section class="px-6 max-w-prose mx-auto gap-12 grid grid-cols-1">
-  <div class="flex flex-col h-48 items-center justify-center">
-    
-      <h1 class="site-title text-4xl leading-relaxed">
-        1% faster matters
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        Optimization in LLM Training and Inference
       </h1>
-      <p class="text-gray-500 mt-2">
-        Hi! I&#39;m Evan, an SW engineer passionate about ​performance optimization​​ in AI training and inference.
-      </p>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2025-08-11</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>3 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>812 words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="Optimization-in-LLM-Training-and-Inference"><a href="#Optimization-in-LLM-Training-and-Inference" class="headerlink" title="Optimization in LLM Training and Inference"></a>Optimization in LLM Training and Inference</h1><h2 id="优化类型有哪些？"><a href="#优化类型有哪些？" class="headerlink" title="优化类型有哪些？"></a>优化类型有哪些？</h2><ul>
+<li>优化显存</li>
+<li>优化带宽</li>
+<li>优化算力</li>
+</ul>
+<h2 id="训练阶段的优化"><a href="#训练阶段的优化" class="headerlink" title="训练阶段的优化"></a>训练阶段的优化</h2><ul>
+<li>计算效率优化<ul>
+<li>混合精度训练：结合FP16（计算）和FP32（权重备份），利用GPU的Tensor Core加速计算，显存占用减少50%，通信量降低。</li>
+<li>Gradient Checkpointing：牺牲30%计算时间换取60%显存降低，通过重计算中间激活值减少存储压力。</li>
+<li>算子融合与计算图优化：合并相邻算子（如LayerNorm+GeLU），减少内存访问次数。FlashAttention将注意力计算速度提升3倍，显存消耗降低5倍。</li>
+</ul>
+</li>
+<li>分布式与并行策略<ul>
+<li>3D并行技术：结合3D并行实现万亿参数训练</li>
+<li>显存优化<ul>
+<li>ZeRO显存优化</li>
+<li>CPU Offloading：将优化器状态卸载至CPU，显存需求降低50%</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>架构创新<ul>
+<li>MoE：仅激活部分专家（如Switch Transformer），计算量减少至5%-15%。</li>
+<li>MLA：合并了KV，降低了推理时带宽需求</li>
+<li>参数高效微调：LoRA&#x2F;QLoRA：低秩适配器微调，仅更新1%-10%参数，显存需求降至FP16的1&#x2F;4</li>
+</ul>
+</li>
+</ul>
+<h2 id="推理阶段的优化"><a href="#推理阶段的优化" class="headerlink" title="推理阶段的优化"></a>推理阶段的优化</h2><ul>
+<li>显存优化方向<ul>
+<li>KV缓存管理<ul>
+<li>分页注意力（PagedAttention）：类似虚拟内存管理，支持非连续显存分配，处理16K长文本时吞吐量提升24倍。</li>
+<li>动态压缩与量化：选择性保留高频注意力头的KV对（Sparse Attention），或通过INT8&#x2F;INT4量化降低75%显存占用（如GPTQ算法）。</li>
+<li>滑动窗口缓存：仅保留最近N个token的KV值，固定长文本显存需求（如Longformer）。</li>
+</ul>
+</li>
+<li>模型权重量化<ul>
+<li>训练后量化（PTQ）：LLaMA-13B经4-bit量化后显存从26GB降至6GB，推理速度提升2倍。</li>
+<li>量化感知训练（QAT）：训练中模拟量化误差，精度损失&lt;1%（如LLM-QAT）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>计算复杂度优化<ul>
+<li>注意力机制改进<ul>
+<li>稀疏化设计：MoE架构（如Switch Transformer）动态激活部分专家，计算量减少至5%-15%。</li>
+<li>多查询注意力（MQA&#x2F;GQA）：共享KV矩阵减少内存访问成本（GQA组内共享，平衡效率与性能）。</li>
+</ul>
+</li>
+<li>算子融合与计算图优化<ul>
+<li>合并LayerNorm+GeLU等相邻算子，减少内存访问（如TensorRT-LLM的Graph Rewriting）。</li>
+<li>FlashAttention-2：优化GPU显存层次访问，训练速度提升3倍，推理延迟降低40%</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>系统调度与并行化<ul>
+<li>动态批处理（Continuous Batching）<ul>
+<li>迭代级调度新请求，吞吐量提升23倍（如vLLM框架），避免短请求“陪跑”长生成任务。</li>
+</ul>
+</li>
+<li>预填充-解码分离（PD分离）：Prefill阶段用高算力GPU并行处理，解码阶段专注显存优化，P99延迟降低78%。</li>
+<li>分布式推理<ul>
+<li>张量并行（Tensor Parallelism）：GPT-3 175B在8xA100上延迟从350ms降至90ms（TensorRT-LLM）。</li>
+<li>异构存储调度：结合CPU&#x2F;SSD扩展显存容量，通过异步数据传输隐藏I&#x2F;O延迟。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>数据与请求层面优化<ul>
+<li>输入压缩<ul>
+<li>提示修剪（Prompt Pruning）：去除冗余token，减少计算负荷。</li>
+<li>检索增强生成（RAG）：仅注入相关外部知识，避免长输入序列。</li>
+</ul>
+</li>
+<li>输出组织<ul>
+<li>骨架化生成（Skeleton-of-Thought）：先规划文本结构再并行填充内容，加速长文本生成。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
     
   </div>
-  
-  
-    
-    
-      <div class="relative pointer-events-none">
-        <span class="text-9xl opacity-10 absolute -left-11 -top-6 font-bold">2025</span>
-      </div>
-    
-    <a style="--stagger:0" href="/2025/08/11/Optimization-in-LLM-Training-and-Inference/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          Optimization in LLM Training and Inference
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Aug 11
-          ·
-          3 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:1" href="/2025/08/09/Cutlass-Terminology-and-Abstraction/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+    </div>
+    <div>
+      
+        <a href="/2025/08/09/Cutlass-Terminology-and-Abstraction/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
           Cutlass Terminology and Abstraction
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Aug 09
-          ·
-          5 min
-        </p>
-      </section>
-    </a>
-  
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
     
-    
-    <a style="--stagger:2" href="/2025/07/30/Desktop-PC-DIY-For-Newbie/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          Desktop PC DIY For Newbie
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Jul 30
-          ·
-          15 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:3" href="/2025/07/30/Technical-Indicators-For-Market/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          Technical Indicators For Market
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Jul 30
-          ·
-          2 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:4" href="/2025/07/20/How-to-optimize-reduce-on-gpu/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          How to optimize reduce on gpu?
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Jul 20
-          ·
-          10 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:5" href="/2025/07/19/mac-github-page-setup/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          Github pages setup on Mac
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Jul 19
-          ·
-          1 min
-        </p>
-      </section>
-    </a>
-  
-    
-    
-    <a style="--stagger:6" href="/2025/07/19/hello-world/" data-animate>
-      <header>
-        <h2 class="font-bold text-xl">
-          Hello World
-        </h2>
-      </header>
-      <section class="text-gray-400 my-2 text-sm time">
-        <p class="line-clamp-4">
-          
-        </p>
-        <p class="line-clamp-4">
-          Jul 19
-          ·
-          1 min
-        </p>
-      </section>
-    </a>
-  
+<script
+  src="https://giscus.app/client.js"
+  data-repo=""
+  data-repo-id=""
+  data-category=""
+  data-category-id=""
+  data-mapping=""
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  crossorigin="anonymous"
+  async
+></script>
+<script>
+  window.onload = function () {
+    console.log("giscus loaded");
+    const isDark = document.documentElement.classList.contains("dark");
+    const giscusFrame = document.querySelector("iframe.giscus-frame");
+    giscusFrame.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: isDark ? "dark" : "light",
+          },
+        },
+      },
+      "https://giscus.app"
+    );
+  };
+</script>
+
+
+  </div>
 </section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
 
 
   </main>
