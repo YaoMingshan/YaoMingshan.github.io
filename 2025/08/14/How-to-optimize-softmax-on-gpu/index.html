@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Evan">
+
+
+  <meta name="subtitle" content="Hi! I'm Evan, an SW engineer passionate about ​performance optimization​​ in AI training and inference.">
+
+
+
+
+<title>How to optimize softmax on gpu | 1% faster matters</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+
+    $("#toggle-dark").click((event) => {
+      const isAppearanceTransition = document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!isAppearanceTransition) {
+        toggleDark()
+        return
+      }
+      const x = event.clientX
+      const y = event.clientY
+      const endRadius = Math.hypot(
+        Math.max(x, innerWidth - x),
+        Math.max(y, innerHeight - y),
+      )
+      const transition = document.startViewTransition(async () => {
+        toggleDark()
+      })
+
+      transition.ready
+        .then(() => {
+          const isDark = document.documentElement.classList.contains("dark")
+          const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+          ]
+          document.documentElement.animate(
+            {
+              clipPath: isDark
+                ? [...clipPath].reverse()
+                : clipPath,
+            },
+            {
+              duration: 400,
+              easing: 'ease-out',
+              pseudoElement: isDark
+                ? '::view-transition-old(root)'
+                : '::view-transition-new(root)',
+            },
+          )
+        })
+    });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="1% faster matters" />
+          1% faster matters
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        How to optimize softmax on gpu
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/YaoMingshan">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        How to optimize softmax on gpu
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2025-08-14</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>5 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>1.1k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="Softmax-on-GPU"><a href="#Softmax-on-GPU" class="headerlink" title="Softmax on GPU"></a>Softmax on GPU</h1><h2 id="多阶段host同步"><a href="#多阶段host同步" class="headerlink" title="多阶段host同步"></a>多阶段host同步</h2><p>分成4个阶段：</p>
+<ul>
+<li>找max</li>
+<li>计算exp(xi - max)</li>
+<li>计算sum</li>
+<li>计算xi&#x2F;sum</li>
+</ul>
+<p>可以优化点：</p>
+<ul>
+<li>计算exp(xi - max)可以和计算sum合并</li>
+</ul>
+<p>缺点就是要多次launch，那有没有不需要多次launch的方法呢？</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;math.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">reduce_max_kernel</span><span class="params">(<span class="type">const</span> <span class="type">float</span>* input, <span class="type">float</span>* output, <span class="type">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">extern</span> __shared__ <span class="type">float</span> sdata[];</span><br><span class="line">    <span class="type">int</span> tid = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> i = blockIdx.x * blockDim.x + tid;</span><br><span class="line"></span><br><span class="line">    sdata[tid] = (i &lt; size) ? input[i] : -INFINITY;</span><br><span class="line">    __syncthreads();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> s = blockDim.x / <span class="number">2</span>; s &gt; <span class="number">0</span>; s &gt;&gt;= <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tid &lt; s) &#123;</span><br><span class="line">            sdata[tid] = <span class="built_in">fmaxf</span>(sdata[tid], sdata[tid + s]);</span><br><span class="line">        &#125;</span><br><span class="line">        __syncthreads();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (tid == <span class="number">0</span>) <span class="built_in">atomic_max</span>(output[<span class="number">0</span>], sdata[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">exp_kernel</span><span class="params">(<span class="type">float</span>* input, <span class="type">float</span>* output, <span class="type">float</span> max_val, <span class="type">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> idx = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">    <span class="keyword">if</span> (idx &gt;= size) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">float</span> exp_val = <span class="built_in">expf</span>(input[idx] - max_val);</span><br><span class="line">    output[idx] = exp_val;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">reduce_sum_kernel</span><span class="params">(<span class="type">const</span> <span class="type">float</span>* input, <span class="type">float</span>* output, <span class="type">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">extern</span> __shared__ <span class="type">float</span> sdata[];</span><br><span class="line">    <span class="type">int</span> tid = threadIdx.x;</span><br><span class="line">    <span class="type">int</span> i = blockIdx.x * blockDim.x + tid;</span><br><span class="line"></span><br><span class="line">    sdata[tid] = (i &lt; size) ? input[i] : <span class="number">0.0f</span>;</span><br><span class="line">    __syncthreads();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> s = blockDim.x / <span class="number">2</span>; s &gt; <span class="number">0</span>; s &gt;&gt;= <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tid &lt; s) &#123;</span><br><span class="line">            sdata[tid] += sdata[tid + s];</span><br><span class="line">        &#125;</span><br><span class="line">        __syncthreads();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (tid == <span class="number">0</span>) <span class="built_in">atomicAdd</span>(output[<span class="number">0</span>], sdata[<span class="number">0</span>]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">normalize_kernel</span><span class="params">(<span class="type">float</span>* output, <span class="type">float</span> sum_exp, <span class="type">int</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> idx = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">    <span class="keyword">if</span> (idx &gt;= size) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    output[idx] /= sum_exp;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="单kernel实现"><a href="#单kernel实现" class="headerlink" title="单kernel实现"></a>单kernel实现</h2><p>怎么做到一次launch实现呢？就需要block之间做同步</p>
+<ul>
+<li>真正的 Grid 级同步限制：</li>
+<li>必须通过 cudaLaunchCooperativeKernel启动 Kernel</li>
+<li>所有 Block 必须同时存活（受 GPU 资源限制）</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cooperative_groups.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_fp16.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cuda_runtime.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> cg = cooperative_groups;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 线程块内的归约求最大值（使用 Cooperative Groups）</span></span><br><span class="line"><span class="function">__device__ <span class="type">float</span> <span class="title">block_reduce_max</span><span class="params">(cg::thread_block block, <span class="type">float</span> val)</span> </span>&#123;</span><br><span class="line">    __shared__ <span class="type">float</span> shared_max;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 步骤1: 每个线程保存自己的值到共享内存</span></span><br><span class="line">    <span class="keyword">if</span> (block.<span class="built_in">thread_rank</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">        shared_max = -INFINITY;</span><br><span class="line">    &#125;</span><br><span class="line">    block.<span class="built_in">sync</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 步骤2: 原子更新块内最大值</span></span><br><span class="line">    <span class="built_in">atomicMax</span>((<span class="type">int</span>*)&amp;shared_max, __float_as_int(val));</span><br><span class="line">    block.<span class="built_in">sync</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 步骤3: 广播最终结果</span></span><br><span class="line">    <span class="keyword">return</span> shared_max;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 线程块内的归约求和（使用 Cooperative Groups）</span></span><br><span class="line"><span class="function">__device__ <span class="type">float</span> <span class="title">block_reduce_sum</span><span class="params">(cg::thread_block block, <span class="type">float</span> val)</span> </span>&#123;</span><br><span class="line">    __shared__ <span class="type">float</span> shared_sum;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 步骤1: 初始化共享内存</span></span><br><span class="line">    <span class="keyword">if</span> (block.<span class="built_in">thread_rank</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">        shared_sum = <span class="number">0.0f</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    block.<span class="built_in">sync</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 步骤2: 原子累加</span></span><br><span class="line">    <span class="built_in">atomicAdd</span>(&amp;shared_sum, val);</span><br><span class="line">    block.<span class="built_in">sync</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> shared_sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Cooperative Softmax 核函数</span></span><br><span class="line"><span class="function">__global__ <span class="type">void</span> <span class="title">cooperative_softmax_kernel</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">const</span> <span class="type">float</span>* __restrict__ input,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">float</span>* __restrict__ output,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">const</span> <span class="type">int</span> size</span></span></span><br><span class="line"><span class="params"><span class="function">)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取当前线程的全局索引</span></span><br><span class="line">    <span class="type">int</span> idx = blockIdx.x * blockDim.x + threadIdx.x;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 初始化全局内存中的 max 和 sum（每个 Block 各存一份）</span></span><br><span class="line">    __shared__ <span class="type">float</span> s_max, s_sum;</span><br><span class="line">    <span class="keyword">extern</span> __shared__ <span class="type">float</span> smem[]; <span class="comment">// 动态共享内存（可选）</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 阶段1: 计算全局最大值</span></span><br><span class="line">    <span class="type">float</span> local_val = (idx &lt; size) ? input[idx] : -INFINITY;</span><br><span class="line">    <span class="type">float</span> block_max = <span class="built_in">block_reduce_max</span>(cg::<span class="built_in">this_thread_block</span>(), local_val);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用原子操作更新全局 max</span></span><br><span class="line">    <span class="keyword">if</span> (cg::<span class="built_in">this_thread_block</span>().<span class="built_in">thread_rank</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">atomicMax</span>((<span class="type">int</span>*)&amp;s_max, __float_as_int(block_max));</span><br><span class="line">    &#125;</span><br><span class="line">    cg::<span class="built_in">sync</span>(cg::<span class="built_in">this_grid</span>()); <span class="comment">// 全局同步</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 阶段2: 计算 exp(z - max) 和全局 sum(exp)</span></span><br><span class="line">    <span class="type">float</span> exp_val = (idx &lt; size) ? <span class="built_in">expf</span>(local_val - s_max) : <span class="number">0.0f</span>;</span><br><span class="line">    <span class="type">float</span> block_sum = <span class="built_in">block_reduce_sum</span>(cg::<span class="built_in">this_thread_block</span>(), exp_val);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用原子操作更新全局 sum</span></span><br><span class="line">    <span class="keyword">if</span> (cg::<span class="built_in">this_thread_block</span>().<span class="built_in">thread_rank</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">atomicAdd</span>(&amp;s_sum, block_sum);</span><br><span class="line">    &#125;</span><br><span class="line">    cg::<span class="built_in">sync</span>(cg::<span class="built_in">this_grid</span>()); <span class="comment">// 再次全局同步</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 阶段3: 归一化并写回结果</span></span><br><span class="line">    <span class="keyword">if</span> (idx &lt; size) &#123;</span><br><span class="line">        output[idx] = exp_val / s_sum;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Host 端启动函数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">launch_cooperative_softmax</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">float</span>* d_input, </span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">float</span>* d_output, </span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">int</span> size, </span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="type">int</span> block_size = <span class="number">256</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 计算线程块数量（确保所有 Block 能同时驻留）</span></span><br><span class="line">    <span class="type">int</span> num_blocks = (size + block_size - <span class="number">1</span>) / block_size;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 检查 GPU 资源是否足够</span></span><br><span class="line">    <span class="type">int</span> max_blocks = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">cudaOccupancyMaxActiveBlocksPerMultiprocessor</span>(</span><br><span class="line">        &amp;max_blocks, </span><br><span class="line">        cooperative_softmax_kernel, </span><br><span class="line">        block_size, </span><br><span class="line">        <span class="number">0</span></span><br><span class="line">    );</span><br><span class="line">    <span class="keyword">if</span> (num_blocks &gt; max_blocks * <span class="number">32</span>) &#123; <span class="comment">// 假设 GPU 有 32 个 SM</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Error: Too many blocks for cooperative launch!\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 配置 Kernel 参数</span></span><br><span class="line">    <span class="type">void</span>* args[] = &#123; &amp;d_input, &amp;d_output, &amp;size &#125;;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 启动 Cooperative Kernel</span></span><br><span class="line">    <span class="built_in">cudaLaunchCooperativeKernel</span>(</span><br><span class="line">        (<span class="type">void</span>*)cooperative_softmax_kernel,</span><br><span class="line">        <span class="built_in">dim3</span>(num_blocks),</span><br><span class="line">        <span class="built_in">dim3</span>(block_size),</span><br><span class="line">        args,</span><br><span class="line">        <span class="number">0</span>, <span class="comment">// 共享内存大小（字节）</span></span><br><span class="line">        <span class="literal">NULL</span> <span class="comment">// 流</span></span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<blockquote>
+<p><strong>Cooperative Groups</strong> 是 CUDA 提供的一种编程模型扩展，用于<strong>更灵活地控制线程同步和协作</strong>，突破了传统 CUDA 中线程块（Block）内部的同步限制。它允许开发者定义任意大小的线程组（从单个线程到整个 Grid），并在组内实现精确的同步和数据共享。</p>
+<ul>
+<li><p><strong>线程组（Thread Groups）</strong>：<br>Cooperative Groups 将线程划分为不同级别的组：</p>
+<ul>
+<li><strong>Thread Block</strong>：与传统 CUDA 线程块一致。</li>
+<li><strong>Thread Block Tile</strong>：线程块的子集（如一个 Warp 或自定义大小）。</li>
+<li><strong>Grid</strong>：整个 Kernel 的所有线程块（需配合 <code>cudaLaunchCooperativeKernel</code>）。</li>
+<li><strong>Multi-Grid</strong>：跨多个 GPU 的协作（高级用法）。</li>
+</ul>
+</li>
+<li><p><strong>同步控制</strong>：<br>每个组提供 <code>sync()</code>方法，确保组内所有线程到达同步点后才继续执行。</p>
+<p>&#x2F;&#x2F; 定义线程块内的子组（例如32线程的Warp）<br>thread_group g &#x3D; this_thread_block().partition(32);<br>g.sync();  &#x2F;&#x2F; 仅同步这32个线程</p>
+<p>  auto grid &#x3D; this_grid();  &#x2F;&#x2F; 定义整个 Grid 的线程组<br>  grid.sync();  &#x2F;&#x2F; 所有线程块在此同步</p>
+</li>
+</ul>
+</blockquote>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+    </div>
+    <div>
+      
+        <a href="/2025/08/11/Optimization-in-LLM-Training-and-Inference/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          Optimization in LLM Training and Inference
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+<script
+  src="https://giscus.app/client.js"
+  data-repo=""
+  data-repo-id=""
+  data-category=""
+  data-category-id=""
+  data-mapping=""
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  crossorigin="anonymous"
+  async
+></script>
+<script>
+  window.onload = function () {
+    console.log("giscus loaded");
+    const isDark = document.documentElement.classList.contains("dark");
+    const giscusFrame = document.querySelector("iframe.giscus-frame");
+    giscusFrame.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: isDark ? "dark" : "light",
+          },
+        },
+      },
+      "https://giscus.app"
+    );
+  };
+</script>
+
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>
