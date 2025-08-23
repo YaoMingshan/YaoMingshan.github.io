@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <meta name="author" content="Evan">
+
+
+  <meta name="subtitle" content="Hi! I'm Evan, an SW engineer passionate about ​performance optimization​​ in AI training and inference.">
+
+
+
+
+<title>Report of MoE Optimization on Blackwell from Cursor | 1% faster matters</title>
+
+
+
+<link rel="icon" href="/favicon.png">
+
+
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/nprogress/nprogress.css">
+
+
+
+<script src="/lib/jquery.min.js"></script>
+
+
+<script src="/lib/iconify-icon.min.js"></script>
+
+
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+  };
+</script>
+
+
+<script src="/lib/nprogress/nprogress.js"></script>
+
+<script>
+  $(document).ready(() => {
+    NProgress.configure({
+      showSpinner: false,
+    });
+    NProgress.start();
+    $("#nprogress .bar").css({
+      background: "#de7441",
+    });
+    $("#nprogress .peg").css({
+      "box-shadow": "0 0 2px #de7441, 0 0 4px #de7441",
+    });
+    $("#nprogress .spinner-icon").css({
+      "border-top-color": "#de7441",
+      "border-left-color": "#de7441",
+    });
+    setTimeout(function () {
+      NProgress.done();
+      $(".fade").removeClass("out");
+    }, 800);
+  });
+</script>
+
+<script>
+  (function () {
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+    if (setting === "dark" || (prefersDark && setting !== "light"))
+      document.documentElement.classList.toggle("dark", true);
+    let isDark = document.documentElement.classList.contains("dark");
+  })();
+
+  $(document).ready(function () {
+    // init icon
+    const prefersDark =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = document.documentElement.classList.contains("dark");
+    $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+
+    function toggleGiscusTheme() {
+      const isDark = document.documentElement.classList.contains("dark");
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+      if (giscusFrame) {
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: {
+                theme: isDark ? "dark" : "light",
+              },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    }
+
+    // toggle dark mode
+    function toggleDark() {
+      let isDark = document.documentElement.classList.contains("dark");
+      const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+      isDark = !isDark;
+      document.documentElement.classList.toggle("dark", isDark);
+      $("#theme-icon").attr("icon", isDark ? "ri:moon-line" : "ri:sun-line");
+      if (prefersDark === isDark) {
+        localStorage.setItem("hexo-color-scheme", "auto");
+      } else {
+        localStorage.setItem("hexo-color-scheme", isDark ? "dark" : "light");
+      }
+      toggleGiscusTheme();
+    }
+
+    // listen dark mode change
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        const setting = localStorage.getItem("hexo-color-scheme") || "auto";
+        if (setting === "auto") {
+          document.documentElement.classList.toggle("dark", e.matches);
+          $("#theme-icon").attr(
+            "icon",
+            e.matches ? "ri:moon-line" : "ri:sun-line"
+          );
+          toggleGiscusTheme();
+        }
+      });
+
+    $("#toggle-dark").click((event) => {
+      const isAppearanceTransition = document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      if (!isAppearanceTransition) {
+        toggleDark()
+        return
+      }
+      const x = event.clientX
+      const y = event.clientY
+      const endRadius = Math.hypot(
+        Math.max(x, innerWidth - x),
+        Math.max(y, innerHeight - y),
+      )
+      const transition = document.startViewTransition(async () => {
+        toggleDark()
+      })
+
+      transition.ready
+        .then(() => {
+          const isDark = document.documentElement.classList.contains("dark")
+          const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+          ]
+          document.documentElement.animate(
+            {
+              clipPath: isDark
+                ? [...clipPath].reverse()
+                : clipPath,
+            },
+            {
+              duration: 400,
+              easing: 'ease-out',
+              pseudoElement: isDark
+                ? '::view-transition-old(root)'
+                : '::view-transition-new(root)',
+            },
+          )
+        })
+    });
+  });
+</script>
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+<body class="font-sans bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-200 relative">
+  <header class="fixed w-full px-5 py-1 z-10 backdrop-blur-xl backdrop-saturate-150 border-b border-black/5">
+  <div class="max-auto">
+    <nav class="flex items-center text-base">
+      <a href="/" class="group">
+        <h2 class="font-medium tracking-tighterp text-l p-2">
+          <img class="w-5 mr-2 inline-block transition-transform group-hover:rotate-[30deg]" id="logo" src="/images/logo.svg" alt="1% faster matters" />
+          1% faster matters
+        </h2>
+      </a>
+      <div id="header-title" class="opacity-0 md:ml-2 md:mt-[0.1rem] text-xs font-medium whitespace-nowrap overflow-hidden overflow-ellipsis">
+        Report of MoE Optimization on Blackwell from Cursor
+      </div>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-3">
+        
+          <a class="hidden sm:flex" href="/archives">Posts</a>
+        
+        
+          
+            <a class="w-5 h-5 hidden sm:flex" title="Github" target="_blank" rel="noopener" href="https://github.com/YaoMingshan">
+              <iconify-icon width="20" icon="ri:github-line"></iconify-icon>
+            </a>
+          
+        
+        <a class="w-5 h-5 hidden sm:flex" title="Github" href="rss2.xml">
+          <iconify-icon width="20" icon="ri:rss-line"></iconify-icon>
+        </a>
+        <a class="w-5 h-5" title="toggle theme" id="toggle-dark">
+          <iconify-icon width="20" icon="" id="theme-icon"></iconify-icon>
+        </a>
+      </div>
+      <div class="flex items-center justify-center gap-3 ml-3 sm:hidden">
+        <span class="w-5 h-5" aria-hidden="true" role="img" id="open-menu">
+          <iconify-icon width="20" icon="carbon:menu" ></iconify-icon>
+        </span>
+        <span class="w-5 h-5 hidden" aria-hidden="true" role="img" id="close-menu">
+          <iconify-icon  width="20" icon="carbon:close" ></iconify-icon>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+<div id="menu-panel" class="h-0 overflow-hidden sm:hidden fixed left-0 right-0 top-12 bottom-0 z-10">
+  <div id="menu-content" class="relative z-20 bg-white/80 px-6 sm:px-8 py-2 backdrop-blur-xl -translate-y-full transition-transform duration-300">
+    <ul class="nav flex flex-col sm:flex-row text-sm font-medium">
+      
+        <li class="nav-portfolio sm:mx-2 border-b sm:border-0 border-black/5 last:border-0 hover:text-main">
+          <a href="/archives" class="flex h-12 sm:h-auto items-center">Posts</a>
+        </li>
+      
+    </ul>
+  </div>
+  <div class="mask bg-black/20 absolute inset-0"></div>
+</div>
+
+  <main class="pt-14">
+    <!-- css -->
+
+<link rel="stylesheet" href="/lib/fancybox/fancybox.min.css">
+
+
+<link rel="stylesheet" href="/lib/tocbot/tocbot.min.css">
+
+<!-- toc -->
+
+  <!-- tocbot -->
+<nav class="post-toc toc text-sm w-48 relative top-32 right-0 opacity-70 hidden lg:block" style="position: fixed !important;"></nav>
+
+
+<section class="px-6 max-w-prose mx-auto md:px-0">
+  <!-- header -->
+  <header class="overflow-hidden pt-6 pb-6 md:pt-12">
+    <div class="pt-4 md:pt-6">
+      <h1 id="article-title" class="text-[2rem] font-bold leading-snug mb-4 md:mb-6 md:text-[2.6rem]">
+        Report of MoE Optimization on Blackwell from Cursor
+      </h1>
+      <div>
+        <section class="flex items-center gap-3 text-sm">
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
+            <time>2025-08-23</time>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
+            <span>8 min</span>
+          </span>
+          <span class="text-gray-400">·</span>
+          <span class="flex items-center gap-1">
+            <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
+            <span>2k words</span>
+          </span>
+          
+        </section>
+      </div>
+    </div>
+  </header>
+  <!-- content -->
+  <article class="post-content prose m-auto slide-enter-content dark:prose-invert">
+    <h1 id="Report-of-MoE-Optimization-on-Blackwell-from-Cursor"><a href="#Report-of-MoE-Optimization-on-Blackwell-from-Cursor" class="headerlink" title="Report of MoE Optimization on Blackwell from Cursor"></a>Report of MoE Optimization on Blackwell from Cursor</h1><h2 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h2><p>开发了MoE kernel，并且用了fp8数据类型，相比于bf16，MoE提升了3.5倍，其中1.5倍是精度降低带来的，3.5&#x2F;1.5是开发kernel带来的收益。</p>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755930519311.png" alt="1755930519311"></p>
+<h2 id="Microscaling-data-formats"><a href="#Microscaling-data-formats" class="headerlink" title="Microscaling data formats"></a>Microscaling data formats</h2><p>是由OCP定义的数据类型，<a target="_blank" rel="noopener" href="https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf">link</a>.</p>
+<p>为了减少大模型训练的计算时间，会采用算力更高的低精度数据类型进行训练，但是低精度数据类型的动态范围小，如果直接将高精度度直接转成低精度，可能表达不了，因此要做数据缩放，缩放到低精度能动态范围内，才可以做训练。</p>
+<blockquote>
+<p>将它们转换为较窄位宽的格式（例如 8 位或更少）会引入不可接受的舍入误差，除非对值进行适当的缩放。例如，大型模型中的某些权重可能是 0.0001、0.0005 或 -0.0007，但简单地将它们转换为 FP8 会将它们全部舍入为同一个数字：零，因为 FP8E4M3 中可表示的最小正值约为 0.0019。</p>
+<p>为了解决这个问题，通常的做法是为每个张量应用一个缩放因子，该因子会重新缩放张量，同时将其值保持在目标数据格式的可表示范围内。这确保了可用的动态范围得到充分利用。例如，如果一个张量的值都在 -0.0001 到 0.0001 之间，则其缩放因子可以设置为 4,480,000。这将导致缩放后的张量值处于 [-448, 448] 范围内，这对应于 FP8E4M3 的可表示范围。</p>
+<p>微缩放更进一步，它对张量的细粒度block应用缩放，而不是对整个张量使用单一缩放因子。微缩放 (MX) 格式通过定义一组低精度、微缩放的数据格式来标准化此方法。</p>
+</blockquote>
+<p>如果我们使用具有 E4M3 元素类型的 MXFP8 格式，则数据将由 FP8E4M3 元素组成，并将 FP8E8M0 比例因子应用于连续的 32 元素块，如下图所示。</p>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755931505528.png" alt="1755931505528"></p>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755931545694.png" alt="1755931545694"></p>
+<h3 id="Blackwell上的挑战"><a href="#Blackwell上的挑战" class="headerlink" title="Blackwell上的挑战"></a>Blackwell上的挑战</h3><h4 id="cuda-core成为瓶颈"><a href="#cuda-core成为瓶颈" class="headerlink" title="cuda core成为瓶颈"></a>cuda core成为瓶颈</h4><p>介绍一下fp8反量化是什么样子，以deepseek v3为例，A 矩阵以大小 1×128 的块进行缩放，B 矩阵以大小 128×128 的块进行反量化。流程是：</p>
+<ul>
+<li>dot计算reduceK 128的中间结果tmp</li>
+<li>在temp上做缩放，乘以a_scale, b_scale</li>
+<li>再将temp的值累加到res上</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lhs [M, K], rhs [N, K]</span></span><br><span class="line"><span class="comment">// lhs_scale [M, K/128], rhs_scale [N/128, K/128]</span></span><br><span class="line"><span class="keyword">for</span> （<span class="type">int</span> mi = <span class="number">0</span>; mi &lt; M; mi++) &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> ni = <span class="number">0</span>; ni &lt; N; ni++) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> ki = <span class="number">0</span>; ki &lt; K; ki += <span class="number">128</span>) &#123;</span><br><span class="line">      <span class="type">float</span> temp = <span class="number">0.0</span></span><br><span class="line">      <span class="keyword">for</span> (<span class="type">int</span> kii = <span class="number">0</span>; kii &lt; <span class="number">128</span>; kii++) &#123;</span><br><span class="line">        temp += lhs[mi * K + ki + kii] * rhs[ki + kii + ni * K];</span><br><span class="line">      &#125;</span><br><span class="line">      out[mi * N + ni] += temp * lhs_scale[mi * ki] * rhs_scale[ni / <span class="number">128</span> * K / <span class="number">128</span> + ki];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在hopper上面，tensor core的输出在寄存器上，cuda core可以直接在寄存器上做scaling，不需要数据搬运；但是blackwell上，tensor core的输出在tmem上，需要将数据搬运到寄存器上然后cuda core做scaling。</p>
+<p>scaling算法上，只需要dot计算量的1&#x2F;32（以32缩放），但是blackwell上tensor core fp8是4,500 TFLOP&#x2F;s，但是fp32 cuda core是80 TFLOP&#x2F;s，两者比值为56。此时cuda core编程bound了，tensor core只能发挥57%的算力。</p>
+<h4 id="fp8量化耗时太长"><a href="#fp8量化耗时太长" class="headerlink" title="fp8量化耗时太长"></a>fp8量化耗时太长</h4><p>在用于 MoE 训练的分组矩阵乘法中：</p>
+<ul>
+<li>M&#x3D;131,072</li>
+<li>K&#x3D;7,168</li>
+<li>N&#x3D;2,048</li>
+</ul>
+<p>131,072×7168×2048×2 FLOP&#x3D;3.85 TFLOP</p>
+<p>Blackwell GPU（B200s）的 FP8 矩阵乘法吞吐量约为 3,300 TFLOP&#x2F;s。这意味着执行矩阵乘法的预期时钟时间为：</p>
+<p>3.85 TFLOP &#x2F; 3,300 TFLOP&#x2F;s&#x3D;1.16 ms</p>
+<ul>
+<li><strong>Load A:</strong> 131,072×7,168×2B&#x3D;1.88 GB</li>
+<li><strong>Load B:</strong> 7,168×2,048×2B&#x3D;0.029 GB</li>
+<li><strong>Store quantized A:</strong> 131,072×7,168×1B&#x3D;0.94 GB</li>
+<li><strong>Store quantized B:</strong> 7,168×2,048×1B&#x3D;0.015 GB</li>
+<li><strong>Store scale factors for A:</strong> 131,072×7,168×132×1B&#x3D;0.029 GB</li>
+<li><strong>Store scale factors for B:</strong> 7,168×2,048×132×1B&#x3D;0.0005 GB</li>
+</ul>
+<p>2.9 GB &#x2F; 6.5 TB&#x2F;s≈0.44 ms</p>
+<p>也就是说，fp8量化和MoE计算是大概1:2的关系，但是有可能带宽用不到那么满，所以fp8量化时间会更长。</p>
+<h2 id="低精量化算法"><a href="#低精量化算法" class="headerlink" title="低精量化算法"></a>低精量化算法</h2><p>选择了fp8e3m4作为量化数据类型，按照32 block做量化，算法如下：</p>
+<p>找到V中绝对值最大的值，将其除以448，转化成fp8e8m0，作为scale；将v除以s，转化成fp8，作为量化值。</p>
+<ul>
+<li><strong>BF16 (or FP32) vector</strong> V&#x3D;{Vi∣i&#x3D;0,…,31}</li>
+<li><strong>Corresponding FP8E4M3 vector</strong> Q&#x3D;{Qi∣i&#x3D;0,…,31}</li>
+<li><strong>FP8E8M0 scale</strong> S</li>
+</ul>
+<p>S&#x3D; <strong>cast_to_fp8e8m0</strong>(<strong>absolute_max</strong> (V) &#x2F; 448)</p>
+<p>Qi&#x3D; <strong>cast_to_fp8e4m3</strong> (Vi &#x2F; S)</p>
+<h2 id="Blackwell新feature-block-scale-MMA"><a href="#Blackwell新feature-block-scale-MMA" class="headerlink" title="Blackwell新feature - block scale MMA"></a>Blackwell新feature - block scale MMA</h2><p>blackwell tensor core中支持dot + scale，但是必须要用tcgen05.mma…block_scale指令，其中scale需要放到tmem中。</p>
+<blockquote>
+<p>首先，tcgen05.mma 指令只需要一个线程即可异步启动。这与 Hopper 不同，Hopper 中的 wgmma 指令需要整个 warpgroup（128 个线程）才能异步启动。因此，我们必须摒弃 Hopper 内核中常见的生产者-消费者模式。</p>
+<p>其次，tcgen05.mma 支持 2-CTA 矩阵乘法，其中两个 SM 通过共享 B 矩阵协作执行矩阵乘法。这减少了内存流量和共享内存使用量，从而支持更深的矩阵乘法流水线。我们的基准测试表明，与非集群版本相比，此 2-CTA 模式可为 MXFP8 矩阵乘法带来约 15% 至 20% 的加速。</p>
+<p>第三，如前所述，tcgen05.mma 将结果累加到 TMEM 中，而不是寄存器中。虽然这减少了寄存器压力，但它也通过 tcgen05.ld 和 tcgen05.st 指令在 TMEM 和寄存器之间引入了额外的数据移动。我们必须确保最大限度地减少这些数据移动。</p>
+<p>最后，tcgen05.mma 指令要求block scale驻留在 TMEM 中。然而，没有直接的方法将比例因子从 HBM 加载到 TMEM。最快的方法是先使用 cp.async.bulk.tensor 指令（利用张量内存加速器，即 TMA）将数据从 HBM 加载到片上 SMEM，然后使用 tcgen05.cp 指令将其从 SMEM 传输到 TMEM。为了实现此方法，比例因子必须存储在 tcgen05.mma 期望的布局。</p>
+</blockquote>
+<p>用1个block 3个wrapgroup(12 warp)，异构的形式做pipeline，包含：</p>
+<ul>
+<li>两个warp group将tensor core的结果从tmem -&gt; register -&gt; smem –tma-&gt; global</li>
+<li>一个warp group做输入数据搬运以及mma<ul>
+<li>warp0搬运 input</li>
+<li>warp1搬运 scale</li>
+<li>warp2 tcgen05.cp smem -&gt; tmem</li>
+<li>warp3（cta0）发起mma，两个协同cta只需要有个一发起tcgen05.mma.cta_group::2.mxf8f6f4.block_scale</li>
+</ul>
+</li>
+<li>各个流水线都用mbarrier做同步</li>
+</ul>
+<p>性能如何呢？</p>
+<ul>
+<li>非block scale dot，tmem用满128 * 512，性能达到3,200 T；如果只用128*256，下降到 3,040 T</li>
+<li>block scale dot，由于pipeline流水线开销，达到2,750 T，是bp16的1.8倍</li>
+</ul>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755937732535.png" alt="1755937732535" title="tmem plan"></p>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755937745610.png" alt="1755937745610" title="smem plan"></p>
+<p><img src="/2025/08/23/Report-of-MoE-Optimization-on-Blackwell-from-Cursor/1755937756197.png" alt="1755937756197" title="pipeline"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (warpgroup_id &lt; <span class="number">2</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_tiles; i++) &#123;</span><br><span class="line">        <span class="built_in">mbarrier_wait_for_final_matmul_completion</span>(); <span class="comment">// mbarrier.try_wait</span></span><br><span class="line">        <span class="built_in">async_load_from_TMEM</span>(reg, TMEM); <span class="comment">// tcgen05.ld</span></span><br><span class="line">        <span class="built_in">wait_for_load_completion</span>(); <span class="comment">// tcgen05.wait</span></span><br><span class="line">        <span class="comment">// This is iterated in the actual implementation to save SMEM </span></span><br><span class="line">        <span class="built_in">store_to_SMEM</span>(SMEM, reg);</span><br><span class="line">        <span class="built_in">TMA_async_store</span>(HBM, SMEM); <span class="comment">// cp.async.bulk.tensor</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (warp_id == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_tiles; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; num_iters; j++) &#123;</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_matmul_completion</span>();</span><br><span class="line">                <span class="comment">// load input tiles</span></span><br><span class="line">                <span class="built_in">TMA_async_load</span>(SMEM, HBM);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (warp_id == <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_tiles; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; num_iters; j++) &#123;</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_tcgen05_cp_completion</span>();</span><br><span class="line">                <span class="comment">// load scales (HBM -&gt; SMEM)</span></span><br><span class="line">                <span class="built_in">TMA_load</span>(SMEM, HBM);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (warp_id == <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_tiles; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; num_iters; j++) &#123;</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_matmul_completion</span>();</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_scale_SMEM_load</span>();</span><br><span class="line">                <span class="comment">// load scales (SMEM -&gt; TMEM)</span></span><br><span class="line">                <span class="built_in">load_to_TMEM</span>(TMEM, SMEM); <span class="comment">// tcgen05.cp</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (cta_rank == <span class="number">0</span>) &#123; <span class="comment">// 2-CTA MMA is launched by a single CTA</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_tiles; i++) &#123;</span><br><span class="line">            <span class="built_in">mbarrier_wait_for_TMEM_clear</span>();</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; num_iters; j++) &#123;</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_input_SMEM_load</span>();</span><br><span class="line">                <span class="built_in">mbarrier_wait_for_scale_TMEM_load</span>();</span><br><span class="line">                <span class="comment">// tcgen05.mma.cta_group::2.mxf8f6f4.block_scale</span></span><br><span class="line">                <span class="built_in">launch_matmul</span>(SMEM, SMEM, TMEM);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>L2 cache optimization中讲了一个有意思的点，ThunderKittens 内核的一种启发式算法，它通过确保所有 148 个 SM 在任何给定时间计算的输出矩阵区域尽可能呈正方形，从而最大限度地提高 L2 的复用率。</p>
+<h2 id="Ref"><a href="#Ref" class="headerlink" title="Ref"></a>Ref</h2><p><a target="_blank" rel="noopener" href="https://cursor.com/cn/blog/kernels">cursor report link</a></p>
+
+  </article>
+  <!-- tag -->
+  <div class="mt-12 pt-6 border-t border-gray-200">
+    
+  </div>
+  <!-- prev and next -->
+  <div class="flex justify-between mt-12 pt-6 border-t border-gray-200">
+    <div>
+      
+    </div>
+    <div>
+      
+        <a href="/2025/08/17/How-to-deploy-llm-by-vLLM/" class="text-sm text-gray-400 hover:text-gray-500 flex justify-center">
+          How to deploy llm by vLLM?
+          <iconify-icon width="20" icon="ri:arrow-right-s-line" data-inline="false"></iconify-icon>
+        </a>
+      
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="article-comments mt-12">
+    
+<script
+  src="https://giscus.app/client.js"
+  data-repo=""
+  data-repo-id=""
+  data-category=""
+  data-category-id=""
+  data-mapping=""
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  crossorigin="anonymous"
+  async
+></script>
+<script>
+  window.onload = function () {
+    console.log("giscus loaded");
+    const isDark = document.documentElement.classList.contains("dark");
+    const giscusFrame = document.querySelector("iframe.giscus-frame");
+    giscusFrame.contentWindow.postMessage(
+      {
+        giscus: {
+          setConfig: {
+            theme: isDark ? "dark" : "light",
+          },
+        },
+      },
+      "https://giscus.app"
+    );
+  };
+</script>
+
+
+  </div>
+</section>
+<!-- js inspect -->
+
+<script src="/lib/clipboard.min.js"></script>
+
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": {
+        preferredFont: "TeX",
+        availableFonts: ["STIX","TeX"],
+        linebreaks: { automatic:true },
+        EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50)
+    },
+    tex2jax: {
+        inlineMath: [ ["$", "$"], ["\\(","\\)"] ],
+        processEscapes: true,
+        ignoreClass: "tex2jax_ignore|dno",
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        equationNumbers: { autoNumber: "AMS" },
+        noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } },
+        Macros: { href: "{}" }
+    },
+    messageStyle: "none"
+  });
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(() => {
+    const maraidConfig = {
+      theme: "default",
+      logLevel: 3,
+      flowchart: { curve: "linear" },
+      gantt: { axisFormat: "%m/%d/%Y" },
+      sequence: { actorMargin: 50 },
+    };
+    mermaid.initialize(maraidConfig);
+  });
+</script>
+
+
+
+<script src="/lib/fancybox/fancybox.umd.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+    $('.post-content').each(function(i){
+      $(this).find('img').each(function(){
+        if ($(this).parent().hasClass('fancybox') || $(this).parent().is('a')) return;
+        var alt = this.alt;
+        if (alt) $(this).after('<span class="fancybox-alt">' + alt + '</span>');
+        $(this).wrap('<a class="fancybox-img" href="' + this.src + '" data-fancybox=\"gallery\" data-caption="' + alt + '"></a>')
+      });
+      $(this).find('.fancybox').each(function(){
+        $(this).attr('rel', 'article' + i);
+      });
+    });
+
+    Fancybox.bind('[data-fancybox="gallery"]', {
+        // options
+    })
+  })
+</script>
+
+<!-- tocbot begin -->
+
+<script src="/lib/tocbot/tocbot.min.js"></script>
+
+<script>
+  $(document).ready(() => {
+      tocbot.init({
+        // Where to render the table of contents.
+        tocSelector: '.post-toc',
+        // Where to grab the headings to build the table of contents.
+        contentSelector: '.post-content',
+        // Which headings to grab inside of the contentSelector element.
+        headingSelector: 'h1, h2, h3',
+        // For headings inside relative or absolute positioned containers within content.
+        hasInnerContainers: true,
+    });
+  })
+</script>
+<!-- tocbot end -->
+
+
+  </main>
+  <footer class="flex flex-col h-40 items-center justify-center text-gray-400 text-sm">
+  <!-- busuanzi -->
+  
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- Busuanzi Analytics -->
+<div class="flex items-center gap-2">
+  <span>Visitors</span>
+  <span id="busuanzi_value_site_uv"></span>
+  <span>Page Views</span>
+  <span id="busuanzi_value_site_pv"></span>
+</div>
+<!-- End Busuanzi Analytics -->
+
+
+  <!-- copyright -->
+  <div class="flex items-center gap-2">
+    <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="color: inherit;">CC BY-NC-SA 4.0</a>
+    <span>© 2022</span>
+    <iconify-icon width="18" icon="emojione-monotone:maple-leaf" ></iconify-icon>
+    <a href="https://github.com/xbmlz" target="_blank" rel="noopener noreferrer">xbmlz</a>
+  </div>
+  <!-- powered by -->
+  <div class="flex items-center gap-2">
+    <span>Powered by</span>
+    <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a>
+    <span>&</span>
+    <a href="https://github.com/xbmlz/hexo-theme-maple" target="_blank" rel="noopener noreferrer">Maple</a>
+  </div>
+
+</footer>
+
+  <div class="back-to-top box-border fixed right-6 z-1024 -bottom-20 rounded py-1 px-1 bg-slate-900 opacity-60 text-white cursor-pointer text-center dark:bg-slate-600">
+    <span class="flex justify-center items-center text-sm">
+      <iconify-icon width="18" icon="ion:arrow-up-c" id="go-top"></iconify-icon>
+      <span id="scrollpercent"><span>0</span> %</span>
+    </span>
+  </div>
+  
+<script src="/js/main.js"></script>
+
+
+  <script>
+    $(document).ready(function () {
+      const mapleCount = "10";
+      const speed = "0.5";
+      const mapleEl = document.getElementById("maple");
+      const maples = Array.from({ length: mapleCount }).map(() => {
+        const maple = document.createElement("div");
+        const scale = Math.random() * 0.5 + 0.5;
+        const offset = Math.random() * 2 - 1;
+        const x = Math.random() * mapleEl.clientWidth;
+        const y = -Math.random() * mapleEl.clientHeight;
+        const duration = 10 / speed;
+        const delay = -duration;
+        maple.className = "maple";
+        maple.style.width = `${24 * scale}px`;
+        maple.style.height = `${24 * scale}px`;
+        maple.style.left = `${x}px`;
+        maple.style.top = `${y}px`;
+        maple.style.setProperty("--maple-fall-offset", offset);
+        maple.style.setProperty("--maple-fall-height", `${Math.abs(y) + mapleEl.clientHeight}px`);
+        maple.style.animation = `fall ${duration}s linear infinite`;
+        maple.style.animationDelay = `${delay}s`;
+        mapleEl.appendChild(maple)
+        return maple
+      })
+    });
+  </script>
+  
+
+
+  <div class="fixed top-0 bottom-0 left-0 right-0 pointer-events-none print:hidden" id="maple"></div>
+</body>
+
+</html>
