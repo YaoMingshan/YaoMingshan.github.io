@@ -264,17 +264,17 @@
         <section class="flex items-center gap-3 text-sm">
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
-            <time>2025-07-30</time>
+            <time>2025-10-12</time>
           </span>
           <span class="text-gray-400">·</span>
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
-            <span>2 min</span>
+            <span>11 min</span>
           </span>
           <span class="text-gray-400">·</span>
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
-            <span>653 words</span>
+            <span>3.3k words</span>
           </span>
           
         </section>
@@ -373,6 +373,222 @@
 <td></td>
 </tr>
 </tbody></table>
+<h1 id="个股技术指标"><a href="#个股技术指标" class="headerlink" title="个股技术指标"></a>个股技术指标</h1><p>以wsj提供的股票指标进行解释</p>
+<h2 id="Simple-Moving-Average（均线）"><a href="#Simple-Moving-Average（均线）" class="headerlink" title="Simple Moving Average（均线）"></a>Simple Moving Average（均线）</h2><ul>
+<li>判断市场趋势（中长期的均线）<ul>
+<li>上升：价格在SMA线上方运行，并且SMA线本身也向上倾斜（<em>操作思路</em> ：倾向于看多或寻找买入机会）</li>
+<li>下降：价格在SMA线下方运行，并且SMA线本身也向下倾斜（<em>操作思路</em> ：倾向于看空或寻找卖出机会）</li>
+<li>波动&#x2F;横盘：价格反复上下穿越SMA线，且SMA线走平（保持观望）</li>
+</ul>
+</li>
+<li>通过短期均线与长期均线的趋势判断买入和卖出：<ul>
+<li>金叉：短期均线向上突破长期均线，买入信号</li>
+<li>死叉：短期均线向下突破长期均线，卖出信号</li>
+<li>结合指标：<ul>
+<li>MACD</li>
+<li>RSI</li>
+<li>随机震荡指标</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>寻找支撑和阻力位<ul>
+<li><strong>在上升趋势中</strong> ：较短期的SMA（如20日线）或价格回踩长期SMA（如50日线）时，往往会获得支撑并反弹</li>
+<li><strong>在下降趋势中</strong> ：价格反弹至SMA线（尤其是长期SMA）时，往往会受到压制并再次下跌</li>
+<li>结合指标：<ul>
+<li>布林带</li>
+<li>抛物线转向</li>
+<li>成交量<ul>
+<li><strong>确认支撑有效</strong> ：当价格回踩到SMA时，如果成交量 <strong>显著萎缩</strong> ，说明抛压减小；随后价格开始反弹时，如果成交量 <strong>明显放大</strong> ，则强烈确认了这个支撑位的有效性</li>
+<li><strong>确认阻力有效</strong> ：当价格反弹到SMA时，如果成交量 <strong>萎缩</strong> ，说明买盘不济；如果价格无法突破并开始下跌，且成交量放大，则确认了阻力位的有效性</li>
+<li><strong>确认突破</strong> ：当价格以<strong>巨量</strong>向上突破一条重要的SMA（如200日线）时，这个突破的信号非常可靠。反之亦然</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>组合<ul>
+<li><strong>短期</strong> ：5， 10， 20</li>
+<li><strong>中期</strong> ：50， 60</li>
+<li><strong>长期</strong> ：100， 200</li>
+<li>短线交易组合：10 &amp; 20 &amp; 50</li>
+<li>长线交易组合：50 &amp; 200</li>
+</ul>
+</li>
+<li>局限性<ul>
+<li><strong>滞后性</strong> ：这是SMA与生俱来的最大缺点。它反映的是过去的价格，所以信号总会“慢半拍”。</li>
+<li><strong>震荡市无效</strong>：在价格没有明确趋势、来回震荡的市场中，SMA会频繁发出交叉信号，导致连续亏损。此时应减少使用或改用震荡指标（如RSI，布林带）。</li>
+<li><strong>不是预测工具</strong>：SMA是“跟随趋势”的工具，它告诉你趋势“正在”发生什么，而不是“将要”发生什么。</li>
+</ul>
+</li>
+</ul>
+<h1 id="Parabolic-SAR（抛物线转向指标）"><a href="#Parabolic-SAR（抛物线转向指标）" class="headerlink" title="Parabolic SAR（抛物线转向指标）"></a>Parabolic SAR（抛物线转向指标）</h1><p>它的核心功能在于 <strong>识别趋势方向、判断潜在的趋势反转点，并提供动态的止损&#x2F;止盈位</strong> 。“SAR”意为“Stop and Reverse”，即“停止并反转”。</p>
+<ul>
+<li>判断趋势<ul>
+<li><strong>SAR点位于K线下方</strong> ：表示当前处于 <strong>上升趋势</strong> 。此时SAR点起着<strong>动态支撑</strong>和<strong>移动止损</strong>的作用</li>
+<li><strong>SAR点位于K线上方</strong> ：表示当前处于 <strong>下降趋势</strong> 。此时SAR点起着<strong>动态阻力</strong>和<strong>移动止损</strong>的作用</li>
+<li><strong>衡量趋势强度</strong><ul>
+<li><strong>强势趋势</strong> ：在上升趋势中，SAR点与K线保持一定距离并稳步上移；在下降趋势中，SAR点与K线保持一定距离并稳步下移。这表示趋势运行顺畅</li>
+<li><strong>趋势末期&#x2F;震荡市</strong> ：SAR点频繁地上下翻转，或者K线与SAR点非常接近。这表明趋势动能减弱，市场可能进入盘整期。<strong>在这种情况下，SAR会产生大量假信号，应停止使用或降低仓位</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>买入卖出信号<ul>
+<li>当SAR点从K线<strong>上方</strong>翻转到K线<strong>下方</strong>时，是一个<strong>看涨买入</strong>信号</li>
+<li>当SAR点从K线<strong>下方</strong>翻转到K线<strong>上方</strong>时，是一个<strong>看跌卖出</strong>或<strong>平仓</strong>信号</li>
+</ul>
+</li>
+<li>SRA作为动态的<strong>止盈&#x2F;止损位</strong><ul>
+<li>这是SAR最实用、最受交易者喜爱的功能</li>
+</ul>
+</li>
+<li>局限性<ul>
+<li>震荡市无效</li>
+<li>滞后性</li>
+<li><strong>不预测趋势开始，只确认趋势存在</strong></li>
+</ul>
+</li>
+<li>结合指标<ul>
+<li>SMA</li>
+<li>MACD</li>
+<li>RSI</li>
+<li>ADX</li>
+</ul>
+</li>
+</ul>
+<p><img src="/2025/07/30/Technical-Indicators-For-Market/1760268385669.png" alt="1760268385669"></p>
+<h2 id="MACD"><a href="#MACD" class="headerlink" title="MACD"></a>MACD</h2><p>MACD是指数平滑异同移动平均线，是技术分析中最经典、用途最广泛的指标之一。它结合了<strong>趋势跟踪</strong>和 <strong>动量分析</strong> ，可以提供强大的买入和卖出信号。</p>
+<ul>
+<li><p>图表构成</p>
+<ul>
+<li><strong>DIF线（快线&#x2F;蓝色线）</strong> ：计算的是短期（默认12日）和长期（默认26日）指数移动平均线的差值。它反应灵敏，是MACD的核心<ul>
+<li><code>DIF = EMA(12) - EMA(26)</code></li>
+</ul>
+</li>
+<li><strong>DEA线（慢线&#x2F;红色线）</strong> ：是DIF线的平均值（默认9日）。它相对迟缓，用于平滑快线的波动<ul>
+<li><code>DEA = EMA(DIF, 9)</code></li>
+</ul>
+</li>
+<li><strong>MACD柱状图</strong> ：表示DIF线与DEA线之间的差值<ul>
+<li><code>MACD柱 = (DIF - DEA) * 2</code> （乘以2是为了放大波动，使其更直观）</li>
+</ul>
+</li>
+<li><strong>零轴</strong> ：是MACD图表中的中心线，是判断多空市场的<strong>分水岭</strong></li>
+</ul>
+</li>
+<li><p>金叉与死叉</p>
+<ul>
+<li><strong>金叉（买入信号）</strong><ul>
+<li>DIF线从下向上穿越DEA线<ul>
+<li><strong>零轴下金叉</strong> ：位于空头市场，是<strong>趋势反弹</strong>的信号，强度较弱</li>
+<li><strong>零轴上金叉</strong> ：位于多头市场，是<strong>趋势加速</strong>的信号，强度<strong>非常可靠</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>死叉（卖出信号）</strong><ul>
+<li>DIF线从上向下穿越DEA线<ul>
+<li><strong>零轴上死叉</strong> ：位于多头市场，是<strong>趋势回调</strong>的信号</li>
+<li><strong>零轴下死叉</strong> ：位于空头市场，是<strong>趋势继续下跌</strong>的信号，强度很强</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>零轴穿越</p>
+<ul>
+<li><strong>DIF线上穿零轴</strong> ：表明市场正由空头转向多头，是<strong>中长期的买入信号</strong></li>
+<li><strong>DIF线下穿零轴</strong> ：表明市场正由多头转向空头，是<strong>中长期的卖出信号</strong></li>
+</ul>
+</li>
+<li><p>背离</p>
+<ul>
+<li><p><strong>顶背离（看跌）</strong></p>
+<ul>
+<li><strong>价格行为</strong> ：价格创出 <strong>新高</strong> 。</li>
+<li><strong>MACD行为</strong> ：MACD的DIF线（或柱状图）却未能创出新高，反而形成了 <strong>更低的高点</strong> 。</li>
+<li><strong>含义</strong> ：价格上涨的动能正在减弱，趋势可能即将反转向下</li>
+</ul>
+</li>
+<li><p><strong>底背离（看涨）</strong> ：</p>
+<ul>
+<li><strong>价格行为</strong> ：价格创出 <strong>新低</strong> 。</li>
+<li><strong>MACD行为</strong> ：MACD的DIF线（或柱状图）却未能创出新低，反而形成了 <strong>更高的低点</strong> 。</li>
+<li><strong>含义</strong> ：价格下跌的动能正在衰竭，趋势可能即将反转向上</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>柱状图使用</p>
+<ul>
+<li><strong>“缩脚”</strong> ：下降的柱状体开始 <strong>变短</strong> ，表明下跌动能减弱，是 <strong>潜在买入信号</strong> ，可能早于金叉</li>
+<li><strong>“缩头”</strong> ：上升的柱状体开始 <strong>变短</strong> ，表明上涨动能减弱，是 <strong>潜在卖出信号</strong> ，可能早于死叉</li>
+</ul>
+</li>
+<li><p>结合指标：SMA + 成交量</p>
+</li>
+</ul>
+<p><img src="/2025/07/30/Technical-Indicators-For-Market/1760269522996.png" alt="1760269522996"></p>
+<h2 id="RSI-相对强弱指数"><a href="#RSI-相对强弱指数" class="headerlink" title="RSI(相对强弱指数)"></a>RSI(相对强弱指数)</h2><p>用于衡量价格变动的 <strong>速度和幅度</strong> ，从而判断市场的<strong>超买</strong>和<strong>超卖</strong>状态。RSI是一个在0到100之间波动的曲线。它的核心原理是：<strong>在特定时期内（通常为14天），上涨总幅度与总涨跌幅度的比值</strong></p>
+<ul>
+<li><strong>超买区域</strong>：当RSI值 <strong>高于70</strong> （有些交易员使用80）时，市场被视为“超买”，<strong>潜在的卖出或做空信号</strong></li>
+<li><strong>超卖区域</strong> ：当RSI值 <strong>低于30</strong> （有些交易员使用20）时，市场被视为“超卖”，<strong>潜在的买入或做多信号</strong></li>
+<li><strong>重要警告</strong> ：在 <strong>强劲的单边趋势</strong> （如大牛市或大熊市）中，RSI可能会长时间停留在超买区（如80以上）或超卖区（如20以下）。因此， <strong>绝不能将超买&#x2F;超卖信号作为独立的交易依据</strong> ，必须结合趋势来判断</li>
+<li>背离<ul>
+<li><strong>看跌背离</strong>：价格创出<strong>新高</strong>，RSI却未能创出新高，反而形成了<strong>更低的高点</strong>，价格上涨的 <strong>动量正在减弱</strong> ，趋势可能即将反转向下。这是强烈的<strong>卖出警告</strong></li>
+<li><strong>看涨背离</strong>：价格创出<strong>新低</strong>，RSI却未能创出新低，反而形成了<strong>更高的低点</strong>，价格下跌的 <strong>动能正在衰竭</strong> ，趋势可能即将反转向上。这是强烈的<strong>买入信号</strong></li>
+</ul>
+</li>
+<li>结合SMA指标</li>
+</ul>
+<h2 id="Blollinger-Bands-布林带"><a href="#Blollinger-Bands-布林带" class="headerlink" title="Blollinger Bands(布林带)"></a>Blollinger Bands(布林带)</h2><p>它不仅能识别趋势，更能衡量市场的<strong>波动性</strong>和 <strong>相对价格位置</strong> ，从而提供丰富的交易信号</p>
+<ul>
+<li>核心构成<ul>
+<li><strong>中轨</strong> ：通常是 <strong>20期简单移动平均线</strong> 。它代表了趋势的<strong>核心方向</strong></li>
+<li><strong>上轨</strong> ：中轨加上两倍的标准差。它代表了价格的<strong>动态阻力位</strong></li>
+<li><strong>下轨</strong> ：中轨减去两倍的标准差。它代表了价格的<strong>动态支撑位</strong><ul>
+<li><strong>标准差</strong>是衡量波动性的统计工具。当市场波动加大时，布林带会 <strong>自动变宽</strong> （通道扩张）；当市场平静时，布林带会<strong>自动变窄</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>支撑与阻力<ul>
+<li><strong>在上升趋势中</strong> ：价格往往会触及或略微突破 <strong>上轨</strong> ，然后回调至<strong>中轨</strong>寻找支撑，中轨就像上升趋势中的“蹦床”</li>
+<li><strong>在下降趋势中</strong> ：价格往往会触及或略微突破 <strong>下轨</strong> ，然后反弹至<strong>中轨</strong>遭遇阻力，中轨就像下降趋势中的“天花板”</li>
+</ul>
+</li>
+<li>市场波动性<ul>
+<li><strong>带宽收窄（收缩）</strong> ：表示市场波动性处于低位，处于“暴风雨前的宁静”。这通常预示着 <strong>一波大的行情即将启动</strong> （突破），但无法告知突破方向</li>
+<li><strong>带宽扩张</strong> ：表示市场波动性急剧增加，一波强劲的趋势行情正在进行中。当带宽开始由扩张再次转向收窄时，往往意味着当前趋势可能即将步入尾声或进入盘整</li>
+</ul>
+</li>
+<li>判断趋势<ul>
+<li><strong>强劲上升趋势</strong> ：价格持续在<strong>中轨上方</strong>运行，并不断测试上轨</li>
+<li><strong>强劲下降趋势</strong> ：价格持续在<strong>中轨下方</strong>运行，并不断测试下轨</li>
+<li><strong>趋势转换</strong> ：价格从布林带的一侧移动到另一侧，并站稳在中轨之上&#x2F;之下，可能预示着趋势的改变</li>
+</ul>
+</li>
+<li>布林带反弹<ul>
+<li>在<strong>没有明确趋势的震荡市</strong>中，布林带上下轨是很好的高抛低吸的参考点</li>
+<li>当价格触及<strong>下轨</strong>时买入，当价格反弹至<strong>上轨</strong>时卖出</li>
+<li><strong>重要前提</strong> ：必须确认市场处于震荡区间，<strong>绝不能</strong>在强劲的单边趋势中使用此策略，否则会面临巨大风险</li>
+</ul>
+</li>
+<li>布林带突破<ul>
+<li>在<strong>有趋势的市场</strong>或出现“挤压”后，应使用顺势策略</li>
+<li>当价格强势突破 <strong>上轨</strong> ，且停留在布林带上半部（即在中轨上方），是强势看涨信号。反之，突破下轨且停留在下半部是看跌信号</li>
+</ul>
+</li>
+<li>Walking the Band（沿带行走）—— 极端强势信号<ul>
+<li>在非常强劲的趋势中，价格会“沿着”上轨或下轨持续运行，甚至长时间停留在布林带之外。这 <strong>不是反转信号</strong> ，而是<strong>趋势极其强劲</strong>的表现。此时逆势做空&#x2F;做多是危险的</li>
+</ul>
+</li>
+<li>结合指标：成交量&#x2F;MACD&#x2F;RSI</li>
+</ul>
+<p><img src="/2025/07/30/Technical-Indicators-For-Market/1760273000656.png" alt="1760273000656"></p>
 
   </article>
   <!-- tag -->
