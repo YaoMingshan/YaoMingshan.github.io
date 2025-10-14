@@ -264,17 +264,17 @@
         <section class="flex items-center gap-3 text-sm">
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="carbon-calendar" ></iconify-icon>
-            <time>2025-10-12</time>
+            <time>2025-10-14</time>
           </span>
           <span class="text-gray-400">·</span>
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="ic:round-access-alarm" ></iconify-icon>
-            <span>11 min</span>
+            <span>20 min</span>
           </span>
           <span class="text-gray-400">·</span>
           <span class="flex items-center gap-1">
             <iconify-icon width="18" icon="icon-park-outline:font-search" ></iconify-icon>
-            <span>3.3k words</span>
+            <span>6k words</span>
           </span>
           
         </section>
@@ -373,7 +373,59 @@
 <td></td>
 </tr>
 </tbody></table>
-<h1 id="个股技术指标"><a href="#个股技术指标" class="headerlink" title="个股技术指标"></a>个股技术指标</h1><p>以wsj提供的股票指标进行解释</p>
+<h1 id="个股技术指标"><a href="#个股技术指标" class="headerlink" title="个股技术指标"></a>个股技术指标</h1><p>以wsj提供的股票指标进行解释，有三类指标</p>
+<ul>
+<li>趋势指标（Trend）<ul>
+<li>识别方向（上升、下降、横盘）、趋势的强度、支撑与阻力位</li>
+<li>趋势指标通常是<strong>滞后性</strong>的，它们不预测趋势的开始，而是<strong>确认趋势已经建立</strong></li>
+<li><strong>典型指标</strong><ul>
+<li>均线</li>
+<li><strong>MACD：</strong> 虽然它也包含动量成分，但其核心是通过两条EMA的聚散来识别趋势方向和变化</li>
+<li><strong>DMI&#x2F;ADX</strong><ul>
+<li><strong>+DI 和 -DI：</strong> 判断趋势方向</li>
+<li><strong>ADX：</strong> 单独用来衡量趋势的 <strong>强度</strong> （无论方向）。ADX值高（如&gt;25）表示趋势强劲；ADX值低表示市场处于无方向的盘整期</li>
+</ul>
+</li>
+<li><strong>布林带</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>动量指标（Momentum）<ul>
+<li>衡量价格变化的速度</li>
+<li><strong>识别超买超卖：</strong> 判断市场是否因上涨过快而可能回调（超买），或因下跌过猛而可能反弹（超卖）</li>
+<li><strong>发现背离：</strong> 这是动量指标最重要的功能之一。当价格创出新高（新低），而动量指标未能创出新高（新低）时，称为“顶背离（底背离）”，暗示当前趋势可能即将衰竭、反转</li>
+<li>动量指标通常是<strong>同步或领先</strong>的。它们通过比较当前价格与特定历史时期的价格，来衡量市场内部的力量，往往能在趋势实际反转前发出预警信号</li>
+<li>典型指标<ul>
+<li>RSI：常70以上为超买区，30以下为超卖区</li>
+<li><strong>随机振荡器：</strong> 比较收盘价与一定时间内的价格区间。同样用于识别超买超卖</li>
+<li><strong>商品通道指数（CCI）</strong></li>
+<li><strong>变动率（ROC）&#x2F;动量</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>交易量指标（Volume）<ul>
+<li><strong>确认趋势：</strong> 在上涨趋势中，成交量应在价格上涨时放大，在价格回调时萎缩；下跌趋势中则相反。如果不符合，则趋势的可靠性存疑</li>
+<li><strong>识别资金流向：</strong> 判断大资金是在买入（吸筹）还是在卖出（派发）</li>
+<li><strong>预警趋势衰竭：</strong> 当价格创新高但成交量未能同步放大时（量价背离），表明市场参与度不高，趋势可能难以持续</li>
+<li><strong>“成交量是价格的先行指标”</strong> 。成交量反映了市场参与者的情绪和投入的资金量，为价格变动提供了“燃料”。没有成交量支持的价格运动往往是虚弱的</li>
+<li><strong>典型指标</strong><ul>
+<li>成交量：最基本的形式，通常以柱状图显示</li>
+<li><strong>能量潮（OBV）：</strong> 将成交量累加，将价格变动与成交量变化直接联系起来，形成一条趋势线</li>
+<li><strong>累积&#x2F;派发线（A&#x2F;D Line）：</strong> 类似于OBV，但计算方式更精细，考虑了当日交易区间的中值</li>
+<li><strong>资金流量指数（MFI）：</strong> 将价格和成交量结合在一起的RSI，被称为“带成交量的RSI”，是判断超买超卖的更可靠指标</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>经典的交易分析流程</strong><ul>
+<li>先用趋势指标（如MA或ADX）判断大方向——现在是明确的上升趋势吗？</li>
+<li>再用动量指标（如RSI）寻找入场时机——在上升趋势中，等待RSI从超卖区回到50以上，或出现底背离时考虑买入</li>
+<li>最后用成交量指标（如OBV）进行确认——在买入时，成交量是否显著放大以支持上涨？</li>
+</ul>
+</li>
+</ul>
 <h2 id="Simple-Moving-Average（均线）"><a href="#Simple-Moving-Average（均线）" class="headerlink" title="Simple Moving Average（均线）"></a>Simple Moving Average（均线）</h2><ul>
 <li>判断市场趋势（中长期的均线）<ul>
 <li>上升：价格在SMA线上方运行，并且SMA线本身也向上倾斜（<em>操作思路</em> ：倾向于看多或寻找买入机会）</li>
@@ -589,6 +641,132 @@
 <li>结合指标：成交量&#x2F;MACD&#x2F;RSI</li>
 </ul>
 <p><img src="/2025/07/30/Technical-Indicators-For-Market/1760273000656.png" alt="1760273000656"></p>
+<h2 id="DMI-ADX"><a href="#DMI-ADX" class="headerlink" title="DMI&#x2F;ADX"></a>DMI&#x2F;ADX</h2><p>DMI（趋向指标）及其核心组成部分ADX（平均趋向指数）是技术分析中<strong>独一无二且极其强大</strong>的工具，因为它专门用于 <strong>衡量趋势的强度</strong> ，而不仅仅是方向或动量</p>
+<ul>
+<li>核心构成<ul>
+<li><strong>+DI（正向趋向指标）</strong> ：代表<strong>上升趋势的强度</strong></li>
+<li><strong>-DI（负向趋向指标）</strong> ：代表<strong>下降趋势的强度</strong></li>
+<li><strong>ADX（平均趋向指数）</strong> ：这是整个系统的核心，它<strong>不区分趋势方向，只衡量趋势的强弱程度</strong></li>
+<li><strong>DI线比较方向</strong> ：通过比较+DI和-DI的相对位置，来判断多空双方谁占优势</li>
+<li><strong>ADX衡量强度</strong> ：无论+DI和-DI谁在上方，只要ADX线上升，就表示 <strong>趋势正在加强</strong> ；只要ADX线下降，就表示 <strong>趋势正在减弱</strong> （市场可能进入盘整）</li>
+</ul>
+</li>
+<li>使用技巧<ul>
+<li><strong>买入信号</strong><ul>
+<li><strong>+DI线从下向上穿越-DI线</strong>，市场的买方力量开始强于卖方力量，上升趋势可能正在启动</li>
+</ul>
+</li>
+<li><strong>卖出信号</strong><ul>
+<li><strong>-DI线从下向上穿越+DI线</strong>，市场的卖方力量开始强于买方力量，下降趋势可能正在启动</li>
+</ul>
+</li>
+<li>单独的DI交叉信号在震荡市中非常不可靠，必须与ADX结合使用来过滤信号</li>
+<li>衡量趋势强度<ul>
+<li><strong>ADX值低（通常 &lt; 25）</strong> ：表示市场<strong>没有趋势，处于盘整或震荡市</strong>,此时应避免使用趋势跟踪策略（如依据DI交叉交易），因为假信号会非常多。应改用震荡策略（如RSI、布林带）</li>
+<li><strong>ADX值高（通常 &gt; 25）</strong> ：表示市场 <strong>存在强劲的趋势</strong> 。趋势可以是上升的，也可以是下降的,此时趋势跟踪策略有效，应<strong>顺势而为</strong></li>
+<li><strong>ADX线上升</strong> ：表示 <strong>趋势正在加速、加强</strong> 。无论当前是涨是跌，趋势都在变得更强劲</li>
+<li><strong>ADX线下降</strong> ：表示 <strong>趋势正在减弱</strong> ，可能即将进入盘整或反转</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>结合指标：均线+布林带</li>
+</ul>
+<p><img src="/2025/07/30/Technical-Indicators-For-Market/1760361922370.png" alt="1760361922370"></p>
+<h2 id="A-D-Line（Accumulation-Distribution-Line）"><a href="#A-D-Line（Accumulation-Distribution-Line）" class="headerlink" title="A&#x2F;D Line（Accumulation&#x2F;Distribution Line）"></a><strong>A&#x2F;D Line（<strong>Accumulation&#x2F;Distribution Line</strong>）</strong></h2><p>它是一个非常重要的<strong>量价结合</strong>指标，用于衡量资金是在流入（累积）还是流出（派发）某一支股票或资产</p>
+<ul>
+<li><strong>累积</strong> ：指“聪明的资金”正在悄悄地买入股票。</li>
+<li><strong>派发</strong> ：指“内部人士”或大资金正在将股票分发给散户投资者。</li>
+</ul>
+<p>该指标通过分析 <strong>收盘价在当日价格区间中的位置</strong> ，并结合 <strong>成交量</strong> ，来估算当日买卖双方的力量对比，并将这个力量进行累加，从而形成一条曲线</p>
+<ul>
+<li>原理<ul>
+<li><strong>资金流乘数</strong><ul>
+<li>资金流乘数 &#x3D; [(收盘价 - 最低价) - (最高价 - 收盘价)] &#x2F; (最高价 - 最低价)</li>
+<li>这个公式衡量的是：收盘价是偏向当日最高点还是最低点？</li>
+<li><strong>如果收盘价在最高点</strong> ，乘数接近  <strong>+1</strong> （表示强劲买入）</li>
+<li><strong>如果收盘价在最低点</strong> ，乘数接近  <strong>-1</strong> （表示强劲卖出）</li>
+<li><strong>如果收盘价在正中间</strong> ，乘数为 <strong>0</strong></li>
+</ul>
+</li>
+<li><strong>资金流额</strong><ul>
+<li>资金流额 &#x3D; 资金流乘数 × 当日成交量</li>
+<li>这将价格行为与成交量结合起来。一个接近+1的乘数配合大成交量，意味着巨大的买压；一个接近-1的乘数配合大成交量，意味着巨大的卖压</li>
+</ul>
+</li>
+<li><strong>A&#x2F;D Line值</strong><ul>
+<li>当日A&#x2F;D Line值 &#x3D; 前一日A&#x2F;D Line值 + 当日资金流额</li>
+<li>这是一个 <strong>累积值</strong> ，将每日的资金流额不断累加。它的绝对数值不重要，重要的是它的<strong>趋势和方向</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>使用方法<ul>
+<li>判断资金流向<ul>
+<li><strong>A&#x2F;D线上升</strong>：表明资金正在<strong>净流入</strong>该资产，处于<strong>累积</strong>阶段。这是一个<strong>看涨</strong>信号。买方力量主导，收盘价经常收在当天价格区间的上部，且伴有成交量。</li>
+<li><strong>A&#x2F;D线下降</strong>：表明资金正在<strong>净流出</strong>该资产，处于<strong>派发</strong>阶段。这是一个<strong>看跌</strong>信号。卖方力量主导，收盘价经常收在当天价格区间的下部</li>
+</ul>
+</li>
+<li>背离分析 —— 最强大、最可靠的功能<ul>
+<li><strong>看跌背离</strong><ul>
+<li><strong>价格创出新低</strong> ，但  <strong>A&#x2F;D Line却未能创出新低</strong> ，反而形成更高的低点</li>
+<li>价格虽然在上涨，但推动其上漲的资金动能却在减弱。这通常意味着“聪明钱”正在利用市场的狂热悄悄地卖出（派发）。这是<strong>趋势可能即将反转向下的强烈警告</strong></li>
+</ul>
+</li>
+<li><strong>看涨背离</strong><ul>
+<li><strong>价格创出新低</strong> ，但  <strong>A&#x2F;D Line却未能创出新低</strong> ，反而形成更高的低点</li>
+<li>价格虽然在下跌，但资金流出的动能正在衰竭，甚至有资金在逢低吸纳（累积）。这是<strong>趋势可能即将反转向上的强烈信号</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>确认趋势强度<ul>
+<li><strong>健康的上行趋势</strong> ：价格不断创出新高，同时A&#x2F;D Line也同步创出新高。这表明上涨得到了资金流入的坚实支持</li>
+<li><strong>健康的下跌趋势</strong> ：价格不断创出新低，同时A&#x2F;D Line也同步创出新低。这表明下跌是由于资金持续流出造成的</li>
+</ul>
+</li>
+<li><strong>核心心法</strong> ：<strong>永远用A&#x2F;D Line来验证价格行为背后的资金动机</strong></li>
+</ul>
+</li>
+</ul>
+<p><img src="/2025/07/30/Technical-Indicators-For-Market/1760363369946.png" alt="1760363369946"></p>
+<h2 id="MFI"><a href="#MFI" class="headerlink" title="MFI"></a>MFI</h2><p>MFI（资金流量指数）是一个非常重要且实用的动量指标。它常被称为 <strong>“带成交量的RSI”</strong> ，因为它将价格的动量和市场的成交量完美地结合在了一起</p>
+<ul>
+<li><p>核心原理</p>
+<ul>
+<li>典型价格 &#x3D; (最高价 + 最低价 + 收盘价) &#x2F; 3</li>
+<li>资金流 &#x3D; 典型价格 × 成交量</li>
+<li>然后，MFI会比较当日的典型价格与前一日的典型价格，来判断资金是“流入”还是“流出”</li>
+<li>最后，通过一个类似RSI的公式，计算出一个在0到100之间波动的数值</li>
+</ul>
+</li>
+<li><p>使用技巧</p>
+<ul>
+<li><strong>超买</strong>：当MFI值<strong>高于80</strong>时，市场被视为“超买”<ul>
+<li>资金在短期内大量涌入，推动价格过快上涨，可能已经“过度兴奋”，短期内<strong>回调或反转下跌</strong>的概率增加</li>
+<li><strong>潜在的卖出或做空信号</strong></li>
+</ul>
+</li>
+<li>超卖：当MFI值<strong>低于20</strong>时，市场被视为“超卖”<ul>
+<li>资金在短期内大量逃离，导致价格过度下跌，市场可能处于“过度恐慌”状态，短期内<strong>反弹或反转上涨</strong>的概率增加</li>
+<li><strong>潜在的买入或做多信号</strong></li>
+</ul>
+</li>
+<li>在<strong>强劲的单边趋势</strong>中，MFI可能会长时间停留在超买区或超卖区（称为“指标钝化”）。因此，<strong>绝不能将超买&#x2F;超卖信号作为独立的交易依据</strong></li>
+<li>背离<ul>
+<li><strong>看跌背离</strong>：价格上涨，MFI却不涨</li>
+<li><strong>看涨背离</strong>：价格下跌，MFI却不跌</li>
+</ul>
+</li>
+</ul>
+<p>您可以将MFI视为  <strong>“市场的资金压力表”</strong> 。</p>
+<ul>
+<li><strong>当价格上涨且MFI同步上升时</strong> ：市场“血压”正常，资金推动健康，趋势可靠。</li>
+<li><strong>当价格上涨但MFI下降时</strong> ：市场出现“高血压”，资金推动力不足，是危险的顶部警告。</li>
+<li><strong>当价格下跌但MFI上升时</strong> ：市场“血压”在回升，资金开始暗中流入，是底部形成的信号</li>
+</ul>
+</li>
+</ul>
 
   </article>
   <!-- tag -->
